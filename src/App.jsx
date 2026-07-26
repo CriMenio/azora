@@ -9,6 +9,7 @@ import Contact from './components/Contact';
 import BookingModal from './components/BookingModal';
 import AdminPanel from './components/AdminPanel';
 import Celebration from './components/Celebration';
+import ScrollToFooter from './components/ScrollToFooter';
 
 function getInitialPage() {
   return window.location.hash === '#admin' ? 'admin' : 'home';
@@ -144,6 +145,8 @@ export default function App() {
 
       {/* Persistent Global Footer */}
       <Footer setActivePage={navigateTo} />
+
+      <ScrollToFooter />
 
       {/* Step-by-Step Booking Form wizard Modal */}
       <BookingModal 

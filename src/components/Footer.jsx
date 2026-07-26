@@ -27,7 +27,7 @@ export default function Footer({ setActivePage }) {
   };
 
   return (
-    <footer className="site-footer">
+    <footer id="site-footer" className="site-footer">
       <div className="container">
         <div className="footer-grid">
           {/* Brand Info */}

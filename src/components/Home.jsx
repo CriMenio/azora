@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ShieldCheck, Award, Sparkles, MapPin, Phone, MessageCircle, ArrowRight } from 'lucide-react';
 import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetService';
+import ScrollDownButton from './ScrollDownButton';
 
 export default function Home({ setActivePage, onOpenBooking, theme }) {
   const DEFAULT_TESTIMONIALS = [
@@ -228,10 +229,11 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
             </div>
           </div>
         </div>
+        <ScrollDownButton targetId="home-intro" />
       </section>
 
       {/* Salon Introduction / Trust Badges */}
-      <section className="section-padding" style={{ backgroundColor: 'var(--color-surface)' }}>
+      <section id="home-intro" className="section-padding" style={{ backgroundColor: 'var(--color-surface)' }}>
         <div className="container">
           <div className="intro-grid">
             <div>

@@ -44,7 +44,7 @@ function createLineItem(overrides = {}) {
   };
 }
 
-function LoginScreen({ onLogin, theme, toggleTheme }) {
+function LoginScreen({ onLogin, onBack, theme, toggleTheme }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
 
@@ -91,6 +91,10 @@ function LoginScreen({ onLogin, theme, toggleTheme }) {
             Sign In
           </button>
         </form>
+
+        <button type="button" className="admin-login-back-btn" onClick={onBack}>
+          <ArrowLeft size={18} /> Back to Site
+        </button>
       </div>
     </div>
   );
@@ -382,7 +386,14 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
   };
 
   if (!isAuthenticated) {
-    return <LoginScreen onLogin={() => setIsAuthenticated(true)} theme={theme} toggleTheme={toggleTheme} />;
+    return (
+      <LoginScreen
+        onLogin={() => setIsAuthenticated(true)}
+        onBack={onExit}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
   }
 
   const previewTotals = computeTotals(
