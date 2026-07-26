@@ -60,6 +60,7 @@ export default function Footer({ setActivePage }) {
               <li><span onClick={() => handleNavClick('services')}>Services</span></li>
               <li><span onClick={() => handleNavClick('about')}>About Us</span></li>
               <li><span onClick={() => handleNavClick('contact')}>Contact</span></li>
+              <li><span onClick={() => handleNavClick('admin')}>Admin</span></li>
             </ul>
           </div>
 

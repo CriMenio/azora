@@ -7,10 +7,15 @@ import Gallery from './components/Gallery';
 import AboutUs from './components/AboutUs';
 import Contact from './components/Contact';
 import BookingModal from './components/BookingModal';
+import AdminPanel from './components/AdminPanel';
 import Celebration from './components/Celebration';
 
+function getInitialPage() {
+  return window.location.hash === '#admin' ? 'admin' : 'home';
+}
+
 export default function App() {
-  const [activePage, setActivePage] = useState('home');
+  const [activePage, setActivePage] = useState(getInitialPage);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
@@ -42,6 +47,26 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    const syncHash = () => {
+      if (window.location.hash === '#admin') {
+        setActivePage('admin');
+      }
+    };
+    window.addEventListener('hashchange', syncHash);
+    return () => window.removeEventListener('hashchange', syncHash);
+  }, []);
+
+  const navigateTo = (page) => {
+    setActivePage(page);
+    if (page === 'admin') {
+      window.location.hash = 'admin';
+    } else if (window.location.hash === '#admin') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
@@ -61,7 +86,7 @@ export default function App() {
       case 'home':
         return (
           <Home 
-            setActivePage={setActivePage} 
+            setActivePage={navigateTo} 
             onOpenBooking={() => handleOpenBooking()} 
             theme={theme}
           />
@@ -81,13 +106,23 @@ export default function App() {
       default:
         return (
           <Home 
-            setActivePage={setActivePage} 
+            setActivePage={navigateTo} 
             onOpenBooking={() => handleOpenBooking()} 
             theme={theme}
           />
         );
     }
   };
+
+  if (activePage === 'admin') {
+    return (
+      <AdminPanel
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onExit={() => navigateTo('home')}
+      />
+    );
+  }
 
   return (
     <div className="app-container">
@@ -96,7 +131,7 @@ export default function App() {
       {/* Premium Sticky Navigation Header */}
       <Header 
         activePage={activePage} 
-        setActivePage={setActivePage} 
+        setActivePage={navigateTo} 
         onOpenBooking={() => handleOpenBooking()} 
         theme={theme}
         toggleTheme={toggleTheme}
@@ -108,7 +143,7 @@ export default function App() {
       </main>
 
       {/* Persistent Global Footer */}
-      <Footer setActivePage={setActivePage} />
+      <Footer setActivePage={navigateTo} />
 
       {/* Step-by-Step Booking Form wizard Modal */}
       <BookingModal 

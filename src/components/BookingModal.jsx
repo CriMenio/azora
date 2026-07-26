@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, User, Phone, Mail, FileText, CheckCircle, Scissors, Sparkles, UserCheck } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Calendar, User, Phone, Mail, FileText, CheckCircle, Scissors, UserCheck, MessageCircle, Download } from 'lucide-react';
 import { saveToSpreadsheet } from '../services/spreadsheetService';
+import { buildBookingWhatsAppMessage, shareReceiptToWhatsApp } from '../services/receiptShareService';
 
 const SERVICES_DATA = [
   { id: 'haircut', name: 'Hair Cut', category: 'Hair', price: 500, duration: '45 mins' },
@@ -39,6 +40,10 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
     notes: ''
   });
   const [errors, setErrors] = useState({});
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+  const [shareStatus, setShareStatus] = useState('idle');
+  const receiptRef = useRef(null);
+  const hasAutoSharedRef = useRef(false);
 
   useEffect(() => {
     if (initialServiceId) {
@@ -61,7 +66,34 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
       setBookingNo('');
     }
     setErrors({});
+    setWhatsappMessage('');
+    setShareStatus('idle');
+    hasAutoSharedRef.current = false;
   }, [initialServiceId, isOpen]);
+
+  const handleShareReceipt = useCallback(async () => {
+    if (!receiptRef.current || !bookingNo || !whatsappMessage) return;
+
+    setShareStatus('sharing');
+    try {
+      const result = await shareReceiptToWhatsApp(receiptRef.current, whatsappMessage, bookingNo);
+      setShareStatus(result.method === 'native-share' ? 'shared-native' : 'shared-download');
+    } catch (error) {
+      console.error('Failed to share receipt:', error);
+      setShareStatus('error');
+    }
+  }, [bookingNo, whatsappMessage]);
+
+  useEffect(() => {
+    if (step !== 4 || !bookingNo || !whatsappMessage || hasAutoSharedRef.current) return;
+
+    hasAutoSharedRef.current = true;
+    const timer = setTimeout(() => {
+      handleShareReceipt();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [step, bookingNo, whatsappMessage, handleShareReceipt]);
 
   if (!isOpen) return null;
 
@@ -165,16 +197,20 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
         notes: formData.notes
       });
 
-      // Construct WhatsApp message content (no price or duration)
-      const messageText = `*New Appointment Booking*\n-------------------------\n*Appointment ID:* ${generatedNo}\n*Client Name:* ${formData.name}\n*Phone:* ${formData.phone}\n*Email:* ${formData.email}\n*Services:* ${activeServices.map(s => s.name).join(', ')}\n*Stylist:* ${activeStylist?.name || 'Preeti'}\n*Date:* ${formData.date}\n*Time Slot:* ${formData.timeSlot}${formData.notes.trim() ? `\n*Notes:* ${formData.notes}` : ''}`;
-      
-      const encodedMessage = encodeURIComponent(messageText);
-      const whatsappUrl = `https://wa.me/917021929588?text=${encodedMessage}`;
+      const messageText = buildBookingWhatsAppMessage({
+        bookingNo: generatedNo,
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        services: activeServices.map(s => s.name).join(', '),
+        stylist: activeStylist?.name || 'Preeti',
+        date: formData.date,
+        timeSlot: formData.timeSlot,
+        notes: formData.notes,
+      });
 
-      // Open WhatsApp link in a new tab
-      window.open(whatsappUrl, '_blank');
-
-      setStep(4); // Move to Confirmation/Receipt
+      setWhatsappMessage(messageText);
+      setStep(4);
     }
   };
 
@@ -223,7 +259,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                 <Scissors size={18} className="text-gold" style={{ color: 'var(--color-primary)' }} /> Select Service & Stylist
               </h3>
               
-              <div className="form-group" style={{ position: 'relative' }}>
+              <div className="form-group">
                 <label className="form-label">Select Services (Multiple Selection)</label>
                 
                 {/* Custom Dropdown Trigger */}
@@ -264,41 +300,10 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                   </span>
                 </div>
 
-                {/* Click Outside Overlay */}
+                {/* Custom Dropdown Menu — inline so fields below stay visible */}
                 {isServiceDropdownOpen && (
                   <div 
-                    onClick={() => setIsServiceDropdownOpen(false)}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 199,
-                      background: 'transparent'
-                    }}
-                  />
-                )}
-
-                {/* Custom Dropdown Menu */}
-                {isServiceDropdownOpen && (
-                  <div 
-                    className="glass-panel" 
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      zIndex: 200,
-                      marginTop: '0.5rem',
-                      maxHeight: '280px',
-                      overflowY: 'auto',
-                      padding: '1.25rem',
-                      boxShadow: 'var(--shadow-lg)',
-                      border: '1px solid var(--color-gold-border)',
-                      backgroundColor: 'rgba(22, 22, 22, 0.98)',
-                      borderRadius: '4px'
-                    }}
+                    className="service-dropdown-panel"
                   >
                     {['Hair', 'Beauty', 'Grooming'].map((cat) => {
                       const catLabel = cat === 'Hair' ? 'Hair Care' : cat === 'Beauty' ? 'Beauty & Aesthetic' : 'Grooming & Wellness';
@@ -404,7 +409,6 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                   value={formData.date} 
                   onChange={handleInputChange}
                   min={new Date().toISOString().split('T')[0]}
-                  style={{ colorScheme: 'dark' }}
                 />
                 {errors.date && <p style={{ color: '#ff4d4d', fontSize: '0.8rem', marginTop: '0.35rem' }}>{errors.date}</p>}
               </div>
@@ -424,7 +428,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                       onClick={() => setFormData(prev => ({ ...prev, timeSlot: slot }))}
                       style={{
                         padding: '0.6rem 0.5rem',
-                        backgroundColor: formData.timeSlot === slot ? 'var(--color-primary)' : '#1e1e1e',
+                        backgroundColor: formData.timeSlot === slot ? 'var(--color-primary)' : 'var(--color-surface-hover)',
                         color: formData.timeSlot === slot ? 'var(--color-text-dark)' : 'var(--color-text)',
                         border: '1px solid',
                         borderColor: formData.timeSlot === slot ? 'var(--color-primary)' : 'var(--color-border)',
@@ -560,21 +564,36 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
               <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', fontFamily: 'var(--font-heading)' }}>
                 Appointment Confirmed!
               </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto 2.5rem' }}>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
                 A confirmation email and SMS have been sent to you. Your stylist is preparing for your visit.
               </p>
 
+              {shareStatus === 'sharing' && (
+                <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                  Preparing receipt screenshot…
+                </p>
+              )}
+              {shareStatus === 'shared-download' && (
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem', maxWidth: '420px', marginInline: 'auto' }}>
+                  Receipt downloaded. WhatsApp is open — attach the image before sending.
+                </p>
+              )}
+              {shareStatus === 'shared-native' && (
+                <p style={{ color: '#4caf50', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                  Receipt shared successfully.
+                </p>
+              )}
+              {shareStatus === 'error' && (
+                <p style={{ color: '#ff4d4d', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                  Could not share automatically. Use the button below to try again.
+                </p>
+              )}
+
               {/* Receipt Styling */}
-              <div style={{ 
-                backgroundColor: '#111111', 
-                border: '1px dashed var(--color-border)', 
-                padding: '2rem', 
-                borderRadius: '4px',
-                textAlign: 'left',
-                maxWidth: '440px',
-                margin: '0 auto 2.5rem',
-                fontFamily: 'var(--font-body)'
-              }}>
+              <div
+                ref={receiptRef}
+                className="booking-receipt-card"
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>APPOINTMENT NO</span>
@@ -612,9 +631,27 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                 </div>
               </div>
 
-              <button className="btn btn-primary" onClick={onClose}>
-                Done & Close
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '2rem' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleShareReceipt}
+                  disabled={shareStatus === 'sharing'}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  {shareStatus === 'shared-download' ? (
+                    <>
+                      <Download size={18} /> Download & Open WhatsApp Again
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle size={18} /> Share Receipt on WhatsApp
+                    </>
+                  )}
+                </button>
+                <button className="btn btn-secondary" onClick={onClose}>
+                  Done & Close
+                </button>
+              </div>
             </div>
           )}
         </div>
