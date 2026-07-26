@@ -94,7 +94,7 @@ export default function Services({ onBookService }) {
     : SERVICES_MENU.filter(s => s.category === activeCategory);
 
   return (
-    <div className="animate-fade-in section-padding">
+    <div className="animate-fade-in page-padding">
       <div className="container">
         {/* Page Header */}
         <div className="section-header">

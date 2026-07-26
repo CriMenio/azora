@@ -71,7 +71,7 @@ export default function Gallery() {
   };
 
   return (
-    <div className="animate-fade-in section-padding">
+    <div className="animate-fade-in page-padding">
       <div className="container">
         {/* Page Header */}
         <div className="section-header">

@@ -149,9 +149,17 @@ a {
   padding: 8rem 0;
 }
 
+.page-padding {
+  padding: 2.5rem 0 6rem;
+}
+
 @media (max-width: 768px) {
   .section-padding {
     padding: 5rem 0;
+  }
+
+  .page-padding {
+    padding: 2rem 0 4rem;
   }
 }
 
