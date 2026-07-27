@@ -196,21 +196,22 @@ export default function AdminRecords({ adminPin }) {
   return (
     <section className="admin-records glass-panel">
       <div className="admin-records-header">
-        <div>
+        <div className="admin-records-header-row">
           <h2>Sheet Records</h2>
-          <p className="admin-section-desc">
-            View data saved from the website — bookings, contact messages, bills, and feedback.
-          </p>
+          <button
+            type="button"
+            className="btn btn-outline-gold admin-records-refresh"
+            onClick={loadRecords}
+            disabled={loading}
+            aria-label="Refresh sheet records"
+          >
+            <RefreshCw size={14} className={loading ? 'admin-records-spin' : ''} />
+            <span className="admin-records-refresh-text">{loading ? '…' : 'Refresh'}</span>
+          </button>
         </div>
-        <button
-          type="button"
-          className="btn btn-outline-gold admin-records-refresh"
-          onClick={loadRecords}
-          disabled={loading}
-        >
-          <RefreshCw size={16} className={loading ? 'admin-records-spin' : ''} />
-          {loading ? 'Loading…' : 'Refresh'}
-        </button>
+        <p className="admin-section-desc admin-records-desc">
+          View data saved from the website — bookings, contact messages, bills, and feedback.
+        </p>
       </div>
 
       {error && (
@@ -235,8 +236,8 @@ export default function AdminRecords({ adminPin }) {
               className={`admin-records-tab${activeTab === id ? ' active' : ''}`}
               onClick={() => setActiveTab(id)}
             >
-              <Icon size={15} />
-              {label}
+              <Icon size={16} className="admin-records-tab-icon" />
+              <span className="admin-records-tab-label">{label}</span>
               <span className="admin-records-count">{counts[id] ?? 0}</span>
             </button>
           ))}

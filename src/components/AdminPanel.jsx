@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Scissors,
   LogOut,
@@ -14,6 +14,8 @@ import {
   ArrowLeft,
   Lock,
   Database,
+  Menu,
+  X,
 } from 'lucide-react';
 import { SERVICES_CATALOG, formatCurrency } from '../data/servicesCatalog';
 import {
@@ -62,41 +64,49 @@ function LoginScreen({ onLogin, onBack, theme, toggleTheme }) {
 
   return (
     <div className="admin-login-page">
-      <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
-
-      <div className="admin-login-card glass-panel">
-        <div className="admin-login-icon">
-          <Lock size={28} />
-        </div>
-        <h1>Azora Admin</h1>
-        <p>Enter your PIN to manage billing and customer records.</p>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Admin PIN</label>
-            <input
-              type="password"
-              className="form-control"
-              value={pin}
-              onChange={(e) => {
-                setPin(e.target.value);
-                setError('');
-              }}
-              placeholder="Enter admin PIN"
-              autoFocus
-            />
-          </div>
-          {error && <p className="admin-error-text">{error}</p>}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-            Sign In
-          </button>
-        </form>
-
-        <button type="button" className="admin-login-back-btn" onClick={onBack}>
-          <ArrowLeft size={18} /> Back to Site
+      <header className="admin-login-header">
+        <button type="button" className="admin-login-header-back" onClick={onBack}>
+          <ArrowLeft size={18} />
+          <span>Back</span>
         </button>
+        <div className="admin-login-header-brand">
+          <Scissors size={18} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
+          <span>Azora Admin</span>
+        </div>
+        <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </header>
+
+      <div className="admin-login-body">
+        <div className="admin-login-card glass-panel">
+          <div className="admin-login-icon">
+            <Lock size={28} />
+          </div>
+          <h1>Sign In</h1>
+          <p>Enter your PIN to manage billing and customer records.</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label">Admin PIN</label>
+              <input
+                type="password"
+                className="form-control"
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value);
+                  setError('');
+                }}
+                placeholder="Enter admin PIN"
+                autoFocus
+              />
+            </div>
+            {error && <p className="admin-error-text">{error}</p>}
+            <button type="submit" className="btn btn-primary admin-login-submit">
+              Sign In
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -199,18 +209,44 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
   const [isGeneratingBill, setIsGeneratingBill] = useState(false);
   const [formError, setFormError] = useState('');
   const [adminView, setAdminView] = useState('billing');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const billRef = useRef(null);
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const handleAdminViewChange = (view) => {
+    setAdminView(view);
+    closeMobileMenu();
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
     setIsAuthenticated(false);
+    closeMobileMenu();
     onExit();
   };
 
   const updateLineItem = (id, field, value) => {
     setLineItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+    setBill(null);
+  };
+
+  const updateLineItemFields = (id, fields) => {
+    setLineItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...fields } : item))
     );
     setBill(null);
   };
@@ -231,19 +267,29 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
     if (!service) return;
 
     setLineItems((prev) => {
-      const existing = prev.find((item) => item.serviceId === service.id);
-      if (existing) {
+      const emptyRow = prev.find((item) => !item.name.trim() && !item.rate);
+      if (emptyRow) {
         return prev.map((item) =>
-          item.serviceId === service.id ? { ...item, qty: item.qty + 1 } : item
+          item.id === emptyRow.id
+            ? { ...item, serviceId: service.id, name: service.name, qty: 1, rate: 0 }
+            : item
         );
       }
+
+      const existing = prev.find((item) => item.serviceId === service.id && item.rate === 0);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === existing.id ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+
       return [
         ...prev,
         createLineItem({
           serviceId: service.id,
           name: service.name,
           qty: 1,
-          rate: service.price,
+          rate: 0,
         }),
       ];
     });
@@ -407,38 +453,87 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
   return (
     <div className="admin-panel">
       <header className="admin-header">
-        <div className="admin-header-left">
-          <button type="button" className="admin-back-btn" onClick={onExit}>
-            <ArrowLeft size={18} /> Back to Site
-          </button>
+        <div className="admin-header-mobile-bar">
           <div className="admin-header-brand">
             <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
             <span>Azora Admin</span>
           </div>
-          <nav className="admin-nav-tabs" aria-label="Admin sections">
-            <button
-              type="button"
-              className={`admin-nav-tab${adminView === 'billing' ? ' active' : ''}`}
-              onClick={() => setAdminView('billing')}
-            >
-              <Receipt size={16} /> Billing
-            </button>
-            <button
-              type="button"
-              className={`admin-nav-tab${adminView === 'records' ? ' active' : ''}`}
-              onClick={() => setAdminView('records')}
-            >
-              <Database size={16} /> Sheet Records
-            </button>
-          </nav>
+          <button
+            type="button"
+            className="admin-menu-toggle"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
-        <div className="admin-header-actions">
-          <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+
+        <div className={`admin-mobile-menu${isMobileMenuOpen ? ' open' : ''}`}>
+          <button
+            type="button"
+            className={`admin-mobile-menu-item${adminView === 'billing' ? ' active' : ''}`}
+            onClick={() => handleAdminViewChange('billing')}
+          >
+            <Receipt size={18} /> Billing
+          </button>
+          <button
+            type="button"
+            className={`admin-mobile-menu-item${adminView === 'records' ? ' active' : ''}`}
+            onClick={() => handleAdminViewChange('records')}
+          >
+            <Database size={18} /> Sheet Records
+          </button>
+          <button
+            type="button"
+            className="admin-mobile-menu-item"
+            onClick={() => {
+              toggleTheme();
+              closeMobileMenu();
+            }}
+          >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           </button>
-          <button type="button" className="btn btn-secondary admin-logout-btn" onClick={handleLogout}>
-            <LogOut size={16} /> Logout
+          <button type="button" className="admin-mobile-menu-item admin-mobile-menu-logout" onClick={handleLogout}>
+            <LogOut size={18} /> Logout
           </button>
+        </div>
+
+        <div className="admin-header-desktop">
+          <div className="admin-header-left">
+            <button type="button" className="admin-back-btn" onClick={onExit}>
+              <ArrowLeft size={18} /> Back to Site
+            </button>
+            <div className="admin-header-brand">
+              <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
+              <span>Azora Admin</span>
+            </div>
+            <nav className="admin-nav-tabs" aria-label="Admin sections">
+              <button
+                type="button"
+                className={`admin-nav-tab${adminView === 'billing' ? ' active' : ''}`}
+                onClick={() => setAdminView('billing')}
+              >
+                <Receipt size={16} /> Billing
+              </button>
+              <button
+                type="button"
+                className={`admin-nav-tab${adminView === 'records' ? ' active' : ''}`}
+                onClick={() => setAdminView('records')}
+              >
+                <Database size={16} /> Sheet Records
+              </button>
+            </nav>
+          </div>
+          <div className="admin-header-actions">
+            <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button type="button" className="btn btn-secondary admin-logout-btn" onClick={handleLogout}>
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -497,6 +592,9 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
             </div>
 
             <h3 className="admin-subheading"><Receipt size={16} /> Services & Charges</h3>
+            <p className="admin-section-desc admin-service-hint">
+              Choose a service from the list or type your own. Enter the price for each service yourself.
+            </p>
 
             <div className="admin-catalog-add">
               <select
@@ -504,10 +602,10 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
                 value={selectedCatalogId}
                 onChange={(e) => setSelectedCatalogId(e.target.value)}
               >
-                <option value="">— Quick add from catalog —</option>
+                <option value="">— Select service from list —</option>
                 {SERVICES_CATALOG.map((service) => (
                   <option key={service.id} value={service.id}>
-                    {service.name} ({formatCurrency(service.price)})
+                    {service.name}
                   </option>
                 ))}
               </select>
@@ -516,13 +614,28 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
               </button>
             </div>
 
+            <div className="admin-line-items-header" aria-hidden="true">
+              <span>Service</span>
+              <span>Qty</span>
+              <span>Price (₹)</span>
+              <span>Amount</span>
+              <span />
+            </div>
+
+            <datalist id="admin-service-suggestions">
+              {SERVICES_CATALOG.map((service) => (
+                <option key={service.id} value={service.name} />
+              ))}
+            </datalist>
+
             <div className="admin-line-items">
               {lineItems.map((item) => (
                 <div key={item.id} className="admin-line-item">
                   <input
                     className="form-control"
+                    list="admin-service-suggestions"
                     value={item.name}
-                    onChange={(e) => updateLineItem(item.id, 'name', e.target.value)}
+                    onChange={(e) => updateLineItemFields(item.id, { name: e.target.value, serviceId: '' })}
                     placeholder="Service name"
                   />
                   <input
@@ -531,14 +644,16 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
                     min="1"
                     value={item.qty}
                     onChange={(e) => updateLineItem(item.id, 'qty', Math.max(1, Number(e.target.value) || 1))}
+                    aria-label="Quantity"
                   />
                   <input
                     type="number"
                     className="form-control admin-rate-input"
                     min="0"
-                    value={item.rate}
+                    value={item.rate || ''}
                     onChange={(e) => updateLineItem(item.id, 'rate', Math.max(0, Number(e.target.value) || 0))}
-                    placeholder="Rate"
+                    placeholder="Enter price"
+                    aria-label="Price"
                   />
                   <span className="admin-line-amount">{formatCurrency(item.qty * item.rate)}</span>
                   <button
@@ -555,7 +670,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
             {errors.lineItems && <p className="admin-error-text">{errors.lineItems}</p>}
 
             <button type="button" className="btn btn-secondary admin-add-row-btn" onClick={addLineItem}>
-              <Plus size={16} /> Add Custom Service
+              <Plus size={16} /> Add Another Service
             </button>
 
             <div className="admin-form-grid" style={{ marginTop: '1.5rem' }}>
