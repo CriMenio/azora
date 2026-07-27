@@ -393,14 +393,13 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
     setShareStatus('sharing');
     setStatusMessage('Preparing bill image…');
     try {
-      const message = buildBillWhatsAppMessage(bill);
-      const result = await shareBillToCustomer(billRef.current, message, bill.clientPhone, bill.billNo);
+      const result = await shareBillToCustomer(billRef.current, bill.clientPhone, bill.billNo);
       if (result.method === 'native-share') {
         setShareStatus('shared-native');
-        setStatusMessage('Bill shared successfully.');
+        setStatusMessage('Bill image shared successfully.');
       } else {
         setShareStatus('shared-download');
-        setStatusMessage('Bill downloaded. WhatsApp opened — attach the image before sending.');
+        setStatusMessage('Bill image downloaded. WhatsApp opened — attach the image and send.');
       }
     } catch (error) {
       console.error('Failed to share bill:', error);

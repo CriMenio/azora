@@ -35,19 +35,18 @@ export function buildBillWhatsAppMessage(bill) {
     .join('\n');
 }
 
-export function openWhatsAppChat(phone, message, attachHint = false) {
+export function openWhatsAppChat(phone, message = '') {
   const formattedPhone = formatWhatsAppPhone(phone);
-  const finalMessage = attachHint
-    ? `${message}\n\n_Please attach the downloaded bill image before sending._`
-    : message;
-  const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(finalMessage)}`;
+  const whatsappUrl = message?.trim()
+    ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/${formattedPhone}`;
   window.open(whatsappUrl, '_blank');
 }
 
 /**
- * Sends bill image + message to a customer's WhatsApp number.
+ * Shares only the bill image to the customer (no text caption).
  */
-export async function shareBillToCustomer(receiptElement, message, phone, billNo) {
+export async function shareBillToCustomer(receiptElement, phone, billNo) {
   if (!receiptElement) throw new Error('Bill element not found');
   if (!phone?.trim()) throw new Error('Customer phone number is required');
 
@@ -55,17 +54,15 @@ export async function shareBillToCustomer(receiptElement, message, phone, billNo
   const filename = `azora-bill-${billNo}.png`;
   const file = new File([blob], filename, { type: 'image/png' });
 
-  if (navigator.canShare?.({ files: [file], text: message })) {
-    await navigator.share({
-      files: [file],
-      text: message,
-      title: `Azora Bill ${billNo}`,
-    });
+  const shareData = { files: [file], title: `Azora Bill ${billNo}` };
+
+  if (navigator.canShare?.(shareData)) {
+    await navigator.share(shareData);
     return { method: 'native-share' };
   }
 
   downloadBlob(blob, filename);
-  openWhatsAppChat(phone, message, true);
+  openWhatsAppChat(phone);
   return { method: 'download-and-whatsapp' };
 }
 

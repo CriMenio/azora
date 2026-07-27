@@ -709,8 +709,14 @@ a {
   border: 1px solid var(--color-border);
   color: var(--color-text);
   font-size: 0.95rem;
+  font-family: var(--font-body);
   transition: var(--transition-fast);
   outline: none;
+}
+
+input[type="number"].form-control {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .form-control:focus {
@@ -1083,6 +1089,8 @@ select.form-control option {
 .admin-line-amount {
   font-size: 0.85rem;
   font-weight: 600;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
   color: var(--color-primary);
   text-align: right;
 }
@@ -1115,10 +1123,11 @@ select.form-control option {
   padding: 0.9rem 1.2rem;
   background-color: var(--color-surface-hover);
   border: 1px solid var(--color-gold-border);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
   color: var(--color-primary);
-  font-family: var(--font-heading);
 }
 
 .admin-form-actions,
@@ -1188,14 +1197,13 @@ select.form-control option {
   max-width: 460px;
   box-sizing: border-box;
   overflow: visible;
-  font-family: Georgia, 'Times New Roman', Times, serif;
-  line-height: 1.4;
+  font-family: var(--font-body);
+  line-height: 1.5;
 }
 
 .admin-bill-card *,
 .admin-bill-card *::before,
 .admin-bill-card *::after {
-  font-family: Georgia, 'Times New Roman', Times, serif !important;
   box-sizing: border-box;
 }
 
@@ -1234,6 +1242,8 @@ select.form-control option {
   line-height: 1.35;
   color: #5e5b52;
   letter-spacing: 0.02em;
+  font-family: var(--font-heading);
+  font-weight: 500;
 }
 
 .admin-bill-meta {
@@ -1248,13 +1258,16 @@ select.form-control option {
   line-height: 1.4;
   color: #5e5b52;
   margin-bottom: 0.2rem;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .admin-bill-meta-value {
   display: block;
-  font-size: 1rem;
-  line-height: 1.3;
-  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: #1c1a16;
 }
 
@@ -1285,7 +1298,8 @@ select.form-control option {
 .admin-bill-info-grid strong {
   display: block;
   line-height: 1.35;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--font-body);
   color: #1c1a16;
 }
 
@@ -1294,6 +1308,7 @@ select.form-control option {
   border-collapse: collapse;
   margin-bottom: 1.25rem;
   font-size: 0.88rem;
+  font-family: var(--font-body);
   table-layout: fixed;
 }
 
@@ -1305,6 +1320,12 @@ select.form-control option {
   line-height: 1.35;
   vertical-align: top;
   word-wrap: break-word;
+  font-family: var(--font-body);
+}
+
+.admin-bill-table td {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-bill-table th:first-child,
@@ -1335,19 +1356,23 @@ select.form-control option {
   justify-content: space-between;
   padding: 0.3rem 0;
   font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-bill-total-row {
   margin-top: 0.35rem;
   padding-top: 0.5rem !important;
   border-top: 1px solid #a88114;
-  font-size: 1.05rem !important;
+  font-size: 1rem !important;
 }
 
 .admin-bill-total-row span,
 .admin-bill-total-row strong {
   color: #a88114;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-bill-notes {
