@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, ShieldCheck, Award, Sparkles, MapPin, Phone, MessageCircle, ArrowRight } from 'lucide-react';
 import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetService';
 import ScrollDownButton from './ScrollDownButton';
+import Logo from './Logo';
 
 export default function Home({ setActivePage, onOpenBooking, theme }) {
   const DEFAULT_TESTIMONIALS = [
@@ -181,9 +182,14 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
       >
         <div className="container">
           <div style={{ maxWidth: '650px' }}>
-            <span className="hero-subtitle animate-fade-in">
-              Welcome to Azora Salon & Spa
-            </span>
+            <div className="hero-signboard animate-fade-in">
+              <div className="hero-signboard-logo">
+                <Logo variant="hero" className="hero-signboard-logo-img" alt="Azora" />
+              </div>
+              <p className="hero-signboard-family">Family Salon</p>
+              <p className="hero-signboard-services">Nail | Hair | Makeup | Skin</p>
+            </div>
+
             <h1 className="hero-title animate-fade-in">
               Where Luxury <br />Meets Perfection.
             </h1>
@@ -240,7 +246,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               <span className="section-subtitle">Our Philosophy</span>
               <h2 className="section-title" style={{ marginBottom: '2rem' }}>Redefine Your Style, Renew Your Spirit</h2>
               <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '1.05rem' }}>
-                Azora is a newly opened boutique beauty salon in Kamothe, Navi Mumbai. Led by Preeti, who brings over 5+ years of professional experience, we combine dedicated personal care with a relaxing atmosphere to help you shine.
+                Azora is a newly opened boutique beauty salon in Kamothe, Navi Mumbai. Co-founded by <strong style={{ color: 'var(--color-text-bright)' }}>Jyoti Chauhan</strong> and <strong style={{ color: 'var(--color-text-bright)' }}>Preeti Chauhan</strong>, we combine dedicated personal care with a relaxing atmosphere to help you shine.
               </p>
               <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
                 Every tool is meticulously sterilized, and every product is hand-selected from top organic luxury brands. Experience personalized beauty services designed for your ultimate comfort.

@@ -237,18 +237,7 @@ export default function Contact() {
                 Salon Hours
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Monday - Friday:</span>
-                  <span>10:00 AM -10:00 PM</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Saturday:</span>
-                  <span>9:00 AM - 10:00 PM</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Sunday:</span>
-                  <span>9:00 AM - 10:00 PM</span>
-                </div>
+                <p style={{ margin: 0 }}>Mon – Sun: 10AM to 10PM</p>
               </div>
             </div>
           </div>

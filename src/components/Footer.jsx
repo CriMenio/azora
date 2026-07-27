@@ -1,4 +1,5 @@
-import { Scissors, Phone, Mail, MapPin } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
+import Logo from './Logo';
 
 const Instagram = ({ size = 18 }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -32,12 +33,15 @@ export default function Footer({ setActivePage }) {
         <div className="footer-grid">
           {/* Brand Info */}
           <div className="footer-col">
-            <div className="logo" style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>
-              <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-              AZORA<span>.</span>
+            <div className="logo footer-logo">
+              <Logo variant="footer" />
             </div>
-            <p style={{ maxWidth: '280px', marginBottom: '1.5rem' }}>
+            <p style={{ maxWidth: '280px', marginBottom: '1rem' }}>
               A sanctuary of elegance and luxury. Experience premium hair, beauty, and grooming rituals designed to revive your senses and enhance your natural beauty.
+            </p>
+            <p className="footer-founders">
+              <span className="footer-founders-label">Co-Founders</span>
+              <span className="footer-founders-names">Jyoti Chauhan &amp; Preeti Chauhan</span>
             </p>
             <div className="social-links">
               <a href="https://instagram.com/azorasalon" target="_blank" rel="noreferrer" className="social-icon" aria-label="Instagram">
@@ -67,26 +71,7 @@ export default function Footer({ setActivePage }) {
           {/* Opening Hours */}
           <div className="footer-col">
             <h3>Hours</h3>
-            <ul className="footer-links" style={{ pointerEvents: 'none' }}>
-              <li>
-                <span style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
-                  <span>Mon - Fri:</span>
-                  <span>10 AM -10 PM</span>
-                </span>
-              </li>
-              <li>
-                <span style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
-                  <span>Saturday:</span>
-                  <span>9 AM - 10 PM</span>
-                </span>
-              </li>
-              <li>
-                <span style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
-                  <span>Sunday:</span>
-                  <span>9 AM - 10 PM</span>
-                </span>
-              </li>
-            </ul>
+            <p className="footer-hours">Mon – Sun: 10AM to 10PM</p>
           </div>
 
           {/* Contact Details */}

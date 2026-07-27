@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Scissors, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Header({ activePage, setActivePage, onOpenBooking, theme, toggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,8 +43,7 @@ export default function Header({ activePage, setActivePage, onOpenBooking, theme
       <div className="container header-container">
         {/* Logo */}
         <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>
-          <Scissors size={22} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-          AZORA<span>.</span>
+          <Logo variant="header" />
         </a>
 
         {/* Navigation Menu */}

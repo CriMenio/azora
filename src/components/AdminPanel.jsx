@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  Scissors,
   LogOut,
   Sun,
   Moon,
@@ -30,6 +29,7 @@ import {
 } from '../services/spreadsheetService';
 import { getLocalNextBillNumber } from '../services/billNumberService';
 import AdminRecords from './AdminRecords';
+import Logo from './Logo';
 
 const ADMIN_SESSION_KEY = 'azora_admin_auth';
 
@@ -70,8 +70,7 @@ function LoginScreen({ onLogin, onBack, theme, toggleTheme }) {
           <span>Back</span>
         </button>
         <div className="admin-login-header-brand">
-          <Scissors size={18} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-          <span>Azora Admin</span>
+          <Logo variant="admin" alt="Azora Admin" />
         </div>
         <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -117,7 +116,7 @@ function BillPreview({ bill, billRef }) {
     <div ref={billRef} className="admin-bill-card">
       <div className="admin-bill-header">
         <div className="admin-bill-header-left">
-          <p className="admin-bill-brand">AZORA SALON</p>
+          <Logo variant="bill" className="admin-bill-logo" alt="Azora Salon" />
           <p className="admin-bill-subtitle">Payment Bill / Invoice</p>
         </div>
         <div className="admin-bill-meta">
@@ -455,8 +454,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
       <header className="admin-header">
         <div className="admin-header-mobile-bar">
           <div className="admin-header-brand">
-            <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-            <span>Azora Admin</span>
+            <Logo variant="admin" alt="Azora Admin" />
           </div>
           <button
             type="button"
@@ -502,12 +500,8 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
 
         <div className="admin-header-desktop">
           <div className="admin-header-left">
-            <button type="button" className="admin-back-btn" onClick={onExit}>
-              <ArrowLeft size={18} /> Back to Site
-            </button>
             <div className="admin-header-brand">
-              <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-              <span>Azora Admin</span>
+              <Logo variant="admin" alt="Azora Admin" />
             </div>
             <nav className="admin-nav-tabs" aria-label="Admin sections">
               <button

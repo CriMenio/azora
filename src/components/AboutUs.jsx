@@ -34,7 +34,7 @@ export default function AboutUs() {
               A New Sanctuary of Beauty & Styling
             </h3>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '1.05rem', lineHeight: '1.7' }}>
-              Azora is a newly opened boutique beauty salon in Kamothe, Navi Mumbai. We were founded on the principle of providing a calm, premium space where clients can receive undivided personal care.
+              Azora is a newly opened boutique beauty salon in Kamothe, Navi Mumbai, co-founded by <strong style={{ color: 'var(--color-text-bright)' }}>Jyoti Chauhan</strong> and <strong style={{ color: 'var(--color-text-bright)' }}>Preeti Chauhan</strong>. We were founded on the principle of providing a calm, premium space where clients can receive undivided personal care.
             </p>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', lineHeight: '1.7' }}>
               What started as a boutique beauty studio has evolved into a premier wellness retreat in Kamothe, Navi Mumbai. Our name, Azora, represents the unique radiant energy that each of our clients possesses. We don't change how you look—we highlight your existing natural beauty so your inner aura shines through.
