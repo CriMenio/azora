@@ -13,6 +13,7 @@ import {
   Receipt,
   ArrowLeft,
   Lock,
+  Database,
 } from 'lucide-react';
 import { SERVICES_CATALOG, formatCurrency } from '../data/servicesCatalog';
 import {
@@ -26,6 +27,7 @@ import {
   saveBillingToSpreadsheet,
 } from '../services/spreadsheetService';
 import { getLocalNextBillNumber } from '../services/billNumberService';
+import AdminRecords from './AdminRecords';
 
 const ADMIN_SESSION_KEY = 'azora_admin_auth';
 
@@ -196,6 +198,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
   const [statusMessage, setStatusMessage] = useState('');
   const [isGeneratingBill, setIsGeneratingBill] = useState(false);
   const [formError, setFormError] = useState('');
+  const [adminView, setAdminView] = useState('billing');
 
   const billRef = useRef(null);
 
@@ -410,8 +413,24 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
           </button>
           <div className="admin-header-brand">
             <Scissors size={20} style={{ transform: 'rotate(-45deg)', color: 'var(--color-primary)' }} />
-            <span>Azora Admin — Billing</span>
+            <span>Azora Admin</span>
           </div>
+          <nav className="admin-nav-tabs" aria-label="Admin sections">
+            <button
+              type="button"
+              className={`admin-nav-tab${adminView === 'billing' ? ' active' : ''}`}
+              onClick={() => setAdminView('billing')}
+            >
+              <Receipt size={16} /> Billing
+            </button>
+            <button
+              type="button"
+              className={`admin-nav-tab${adminView === 'records' ? ' active' : ''}`}
+              onClick={() => setAdminView('records')}
+            >
+              <Database size={16} /> Sheet Records
+            </button>
+          </nav>
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
@@ -424,6 +443,9 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
       </header>
 
       <main className="admin-main container">
+        {adminView === 'records' ? (
+          <AdminRecords adminPin={getAdminPin()} />
+        ) : (
         <div className="admin-grid">
           {/* Form Column */}
           <section className="admin-form-section glass-panel">
@@ -624,6 +646,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
             )}
           </section>
         </div>
+        )}
       </main>
     </div>
   );

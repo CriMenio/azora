@@ -11,6 +11,9 @@
  * 4. Add the new helper functions at the bottom
  * 5. Deploy → Manage deployments → Edit → New version → Deploy
  *    (Must redeploy — saving alone is not enough)
+ *
+ * ADMIN RECORDS (optional): In Apps Script → Project Settings → Script properties,
+ * add ADMIN_PIN = same value as VITE_ADMIN_PIN on Netlify (default: azora2024)
  */
 
 function doPost(e) {
@@ -88,6 +91,12 @@ function doPost(e) {
         data.createdAt || timestamp.toISOString()
       ]);
 
+    } else if (data.formType === "adminFetch") {
+      if (!isValidAdminPin(String(data.pin || ""))) {
+        return createJsonResponse({ error: "Unauthorized" });
+      }
+      return createJsonResponse(getAdminRecords());
+
     } else {
       return createResponse("error", "Unsupported or missing formType");
     }
@@ -101,12 +110,19 @@ function doPost(e) {
 
 function doGet(e) {
   try {
-    // NEW: Admin requests next invoice number → AZR20260726001, AZR20260726002, ...
     var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "testimonials";
 
     if (action === "nextBillNo") {
       var dateParam = (e.parameter && e.parameter.date) ? e.parameter.date : "";
       return createJsonResponse(getNextBillNumber(dateParam));
+    }
+
+    if (action === "adminRecords") {
+      var pin = (e.parameter && e.parameter.pin) ? String(e.parameter.pin) : "";
+      if (!isValidAdminPin(pin)) {
+        return createJsonResponse({ error: "Unauthorized" });
+      }
+      return createJsonResponse(getAdminRecords());
     }
 
     // Existing testimonials (Feedback sheet)
@@ -169,6 +185,113 @@ function doGet(e) {
   } catch (error) {
     return createJsonResponse({ error: error.toString() });
   }
+}
+
+// ---------- ADMIN RECORDS (read sheet data for admin panel) ----------
+
+function getAdminPin() {
+  var stored = PropertiesService.getScriptProperties().getProperty("ADMIN_PIN");
+  return stored || "azora2024";
+}
+
+function isValidAdminPin(pin) {
+  return String(pin || "") === getAdminPin();
+}
+
+function formatSheetDate(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  return value != null ? String(value) : "";
+}
+
+function readSheetRows(sheetName, mapRow) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    return [];
+  }
+
+  var values = sheet.getDataRange().getValues();
+  if (values.length <= 1) {
+    return [];
+  }
+
+  var rows = [];
+  for (var i = 1; i < values.length; i++) {
+    rows.push(mapRow(values[i]));
+  }
+
+  rows.reverse();
+  return rows;
+}
+
+function getAdminRecords() {
+  var contacts = readSheetRows("Contact Form", function(row) {
+    return {
+      timestamp: formatSheetDate(row[0]),
+      name: row[1] || "",
+      email: row[2] || "",
+      subject: row[3] || "",
+      message: row[4] || ""
+    };
+  });
+
+  var bookings = readSheetRows("Bookings", function(row) {
+    return {
+      timestamp: formatSheetDate(row[0]),
+      bookingNo: row[1] || "",
+      name: row[2] || "",
+      phone: row[3] || "",
+      email: row[4] || "",
+      service: row[5] || "",
+      price: row[6] || "",
+      duration: row[7] || "",
+      stylist: row[8] || "",
+      date: row[9] || "",
+      timeSlot: row[10] || "",
+      notes: row[11] || ""
+    };
+  });
+
+  var feedback = readSheetRows("Feedback", function(row) {
+    return {
+      timestamp: formatSheetDate(row[0]),
+      name: row[1] || "",
+      role: row[2] || "",
+      quote: row[3] || "",
+      stars: parseInt(row[4], 10) || 5
+    };
+  });
+
+  var billing = readSheetRows("Billing", function(row) {
+    return {
+      billNo: row[0] || "",
+      serviceDate: row[1] || "",
+      clientName: row[2] || "",
+      phone: row[3] || "",
+      email: row[4] || "",
+      services: row[5] || "",
+      subtotal: row[6] != null ? row[6] : "",
+      discount: row[7] != null ? row[7] : "",
+      total: row[8] != null ? row[8] : "",
+      notes: row[9] || "",
+      createdAt: formatSheetDate(row[10])
+    };
+  });
+
+  return {
+    contacts: contacts,
+    bookings: bookings,
+    feedback: feedback,
+    billing: billing,
+    counts: {
+      contacts: contacts.length,
+      bookings: bookings.length,
+      feedback: feedback.length,
+      billing: billing.length
+    }
+  };
 }
 
 // ---------- NEW BILLING HELPERS ----------

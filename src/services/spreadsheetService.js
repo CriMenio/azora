@@ -122,6 +122,79 @@ export async function saveBillingToSpreadsheet(bill) {
 }
 
 /**
+ * Fetches all sheet records for the admin panel (Contact, Bookings, Feedback, Billing).
+ */
+function isValidAdminRecordsPayload(data) {
+  return (
+    data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    Array.isArray(data.billing) &&
+    Array.isArray(data.bookings) &&
+    Array.isArray(data.contacts) &&
+    Array.isArray(data.feedback)
+  );
+}
+
+const ADMIN_RECORDS_DEPLOY_MSG =
+  'Apps Script is missing the admin records API. Open your AzoraData script, paste the latest google-apps-script/Code.gs, then Deploy → Manage deployments → Edit → New version → Deploy.';
+
+async function parseJsonResponse(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('Invalid response from Google Sheet');
+  }
+}
+
+export async function getAdminRecords(adminPin) {
+  const webhookUrl = getWebhookUrl();
+
+  if (!isWebhookConfigured(webhookUrl)) {
+    throw new Error('Spreadsheet webhook is not configured');
+  }
+
+  const getUrl = `${webhookUrl}?action=adminRecords&pin=${encodeURIComponent(adminPin)}`;
+  const getResponse = await fetch(getUrl);
+  if (!getResponse.ok) {
+    throw new Error(`Failed to fetch records (HTTP ${getResponse.status})`);
+  }
+
+  let data = await parseJsonResponse(getResponse);
+
+  if (!isValidAdminRecordsPayload(data)) {
+    const postResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({ formType: 'adminFetch', pin: adminPin }),
+    });
+    data = await parseJsonResponse(postResponse);
+  }
+
+  if (Array.isArray(data)) {
+    throw new Error(ADMIN_RECORDS_DEPLOY_MSG);
+  }
+
+  if (data?.error === 'Unauthorized') {
+    throw new Error('Invalid admin PIN on server. Set ADMIN_PIN in Apps Script properties to match VITE_ADMIN_PIN.');
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  if (!isValidAdminRecordsPayload(data)) {
+    throw new Error(ADMIN_RECORDS_DEPLOY_MSG);
+  }
+
+  return data;
+}
+
+/**
  * Fetches dynamic testimonials from the Google Sheets Webapp.
  */
 export async function getTestimonials() {
