@@ -217,15 +217,8 @@ export default function Contact() {
                 href="https://wa.me/917021929588?text=Hello%20Azora%20Salon!%20I'd%20like%20to%20inquire%20about%20booking%20an%20appointment."
                 target="_blank"
                 rel="noreferrer"
-                className="btn btn-secondary"
-                style={{
-                  borderColor: '#25D366',
-                  color: '#25D366',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  width: '100%'
-                }}
+                className="btn btn-secondary btn-whatsapp"
+                style={{ width: '100%' }}
               >
                 <MessageCircle size={18} fill="currentColor" /> Chat on WhatsApp
               </a>

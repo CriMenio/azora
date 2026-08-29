@@ -551,7 +551,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div className="hero-cta">
                 <button className="btn btn-primary" onClick={onOpenBooking}>
                   Book Appointment
                 </button>
@@ -559,8 +559,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
                   href="https://wa.me/917021929588?text=Hello%20Azora%20Salon!%20I'd%20like%20to%20inquire%20about%20booking%20an%20appointment." 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="btn btn-secondary"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #25D366', color: '#25D366' }}
+                  className="btn btn-secondary btn-whatsapp"
                 >
                   <MessageCircle size={18} fill="currentColor" /> Chat on WhatsApp
                 </a>

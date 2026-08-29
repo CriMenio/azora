@@ -3,6 +3,7 @@ import { X, Calendar, User, Phone, Mail, FileText, CheckCircle, Scissors, UserCh
 import { saveToSpreadsheet } from '../services/spreadsheetService';
 import { buildBookingWhatsAppMessage, shareReceiptToWhatsApp } from '../services/receiptShareService';
 import { BOOKING_CATEGORIES, getBookingServices } from '../data/servicesCatalog';
+import UiSelect from './UiSelect';
 
 const SERVICES_DATA = getBookingServices();
 
@@ -365,16 +366,14 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
 
               <div className="form-group">
                 <label className="form-label">Select Stylist / Therapist</label>
-                <select 
-                  className="form-control" 
-                  name="stylistId" 
-                  value={formData.stylistId} 
-                  onChange={handleInputChange}
-                >
-                  {STYLISTS.map(stylist => (
-                    <option key={stylist.id} value={stylist.id}>{stylist.name} ({stylist.role})</option>
-                  ))}
-                </select>
+                <UiSelect
+                  value={formData.stylistId}
+                  onChange={(value) => handleInputChange({ target: { name: 'stylistId', value } })}
+                  options={STYLISTS.map((stylist) => ({
+                    value: stylist.id,
+                    label: `${stylist.name} (${stylist.role})`,
+                  }))}
+                />
                 {errors.stylistId && <p style={{ color: '#ff4d4d', fontSize: '0.8rem', marginTop: '0.35rem' }}>{errors.stylistId}</p>}
               </div>
 

@@ -30,6 +30,7 @@ import {
 import { getLocalNextBillNumber } from '../services/billNumberService';
 import AdminRecords from './AdminRecords';
 import Logo from './Logo';
+import UiSelect from './UiSelect';
 
 const ADMIN_SESSION_KEY = 'azora_admin_auth';
 
@@ -590,18 +591,15 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
             </p>
 
             <div className="admin-catalog-add">
-              <select
-                className="form-control"
+              <UiSelect
                 value={selectedCatalogId}
-                onChange={(e) => setSelectedCatalogId(e.target.value)}
-              >
-                <option value="">— Select service from list —</option>
-                {SERVICES_CATALOG.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedCatalogId}
+                placeholder="— Select service from list —"
+                options={SERVICES_CATALOG.map((service) => ({
+                  value: service.id,
+                  label: service.name,
+                }))}
+              />
               <button type="button" className="btn btn-outline-gold" onClick={addFromCatalog} disabled={!selectedCatalogId}>
                 <Plus size={16} /> Add
               </button>
@@ -663,7 +661,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
             {errors.lineItems && <p className="admin-error-text">{errors.lineItems}</p>}
 
             <button type="button" className="btn btn-secondary admin-add-row-btn" onClick={addLineItem}>
-              <Plus size={16} /> Add Another Service
+              <Plus size={16} /> Add Service
             </button>
 
             <div className="admin-form-grid" style={{ marginTop: '1.5rem' }}>
