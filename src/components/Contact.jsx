@@ -70,7 +70,7 @@ export default function Contact() {
         <div className="section-header">
           <span className="section-subtitle">Get In Touch</span>
           <h2 className="section-title">Contact Azora</h2>
-          <p style={{ color: 'var(--color-text-muted)', maxWidth: '600px', margin: '1.5rem auto 0', fontSize: '1rem' }}>
+          <p className="section-desc">
             Have a question about our services, styling packages, or bridal bookings? Drop us a line and our guest coordinator will get back to you shortly.
           </p>
         </div>

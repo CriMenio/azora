@@ -2,18 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Calendar, User, Phone, Mail, FileText, CheckCircle, Scissors, UserCheck, MessageCircle, Download } from 'lucide-react';
 import { saveToSpreadsheet } from '../services/spreadsheetService';
 import { buildBookingWhatsAppMessage, shareReceiptToWhatsApp } from '../services/receiptShareService';
+import { BOOKING_CATEGORIES, getBookingServices } from '../data/servicesCatalog';
 
-const SERVICES_DATA = [
-  { id: 'haircut', name: 'Hair Cut', category: 'Hair', price: 500, duration: '45 mins' },
-  { id: 'hairspa', name: 'Hair Spa', category: 'Hair', price: 1200, duration: '60 mins' },
-  { id: 'haircoloring', name: 'Hair Coloring', category: 'Hair', price: 2500, duration: '120 mins' },
-  { id: 'facial', name: 'Facial Service', category: 'Beauty', price: 1500, duration: '60 mins' },
-  { id: 'waxing', name: 'Waxing Full', category: 'Beauty', price: 1000, duration: '45 mins' },
-  { id: 'threading', name: 'Threading', category: 'Beauty', price: 150, duration: '15 mins' },
-  { id: 'beardstyling', name: 'Beard Styling', category: 'Grooming', price: 300, duration: '30 mins' },
-  { id: 'manicure', name: 'Manicure', category: 'Grooming', price: 600, duration: '45 mins' },
-  { id: 'pedicure', name: 'Pedicure', category: 'Grooming', price: 800, duration: '50 mins' },
-];
+const SERVICES_DATA = getBookingServices();
 
 const STYLISTS = [
   { id: 'preeti', name: 'Preeti', role: 'Founder & Senior Specialist' },
@@ -146,9 +137,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
       }
     } else if (step === 3) {
       if (!formData.name.trim()) newErrors.name = 'Full name is required';
-      if (!formData.email.trim()) {
-        newErrors.email = 'Email address is required';
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = 'Please enter a valid email address';
       }
       if (!formData.phone.trim()) {
@@ -305,12 +294,12 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                   <div 
                     className="service-dropdown-panel"
                   >
-                    {['Hair', 'Beauty', 'Grooming'].map((cat) => {
-                      const catLabel = cat === 'Hair' ? 'Hair Care' : cat === 'Beauty' ? 'Beauty & Aesthetic' : 'Grooming & Wellness';
-                      const catServices = SERVICES_DATA.filter(s => s.category === cat);
-                      
+                    {BOOKING_CATEGORIES.map(({ key, label }) => {
+                      const catServices = SERVICES_DATA.filter(s => s.bookingCategory === key);
+                      if (catServices.length === 0) return null;
+
                       return (
-                        <div key={cat} style={{ marginBottom: '1.25rem' }}>
+                        <div key={key} style={{ marginBottom: '1.25rem' }}>
                           <div style={{ 
                             fontSize: '0.75rem', 
                             fontWeight: '600', 
@@ -321,7 +310,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                             borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
                             paddingBottom: '0.25rem'
                           }}>
-                            {catLabel}
+                            {label}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {catServices.map(service => {
@@ -357,6 +346,9 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                                     />
                                     <span style={{ fontSize: '0.9rem', color: isSelected ? 'var(--color-text-bright)' : 'var(--color-text)' }}>
                                       {service.name}
+                                      {service.popular && (
+                                        <span className="service-popular-tag">Popular</span>
+                                      )}
                                     </span>
                                   </div>
                                 </div>
@@ -483,7 +475,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }} className="grid-mobile-1">
                 <div className="form-group">
-                  <label className="form-label">Email Address</label>
+                  <label className="form-label">Email Address (Optional)</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }}>
                       <Mail size={16} />
@@ -565,7 +557,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                 Appointment Confirmed!
               </h3>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-                A confirmation email and SMS have been sent to you. Your stylist is preparing for your visit.
+                Your booking is confirmed. Your stylist is preparing for your visit.
               </p>
 
               {shareStatus === 'sharing' && (

@@ -62,6 +62,7 @@ export default function Footer({ setActivePage }) {
             <ul className="footer-links">
               <li><span onClick={() => handleNavClick('home')}>Home</span></li>
               <li><span onClick={() => handleNavClick('services')}>Services</span></li>
+              <li><span onClick={() => handleNavClick('gallery')}>Gallery</span></li>
               <li><span onClick={() => handleNavClick('about')}>About Us</span></li>
               <li><span onClick={() => handleNavClick('contact')}>Contact</span></li>
               <li><span onClick={() => handleNavClick('admin')}>Admin</span></li>

@@ -3,6 +3,7 @@ import { Star, ShieldCheck, Award, Sparkles, MapPin, Phone, MessageCircle, Arrow
 import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetService';
 import ScrollDownButton from './ScrollDownButton';
 import Logo from './Logo';
+import { SITE_IMAGES } from '../assets/siteImages';
 
 export default function Home({ setActivePage, onOpenBooking, theme }) {
   const DEFAULT_TESTIMONIALS = [
@@ -23,7 +24,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
     {
       name: "Priya Sharma",
       role: "Skincare Client",
-      quote: "Tried their gold facial service. Preeti's 3+ years of experience really shows in her massage technique and skin service. So happy to have a high-quality salon nearby!",
+      quote: "Tried their gold facial service. Preeti's years of experience really shows in her massage technique and skin service. So happy to have a high-quality salon nearby!",
       stars: 5,
       avatar: "PS"
     }
@@ -148,23 +149,20 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
 
   const featuredServices = [
     {
-      name: "Couture Haircut & Style",
-      price: 500,
-      desc: "Personalized consultation, luxury hair wash, signature blow-dry, and professional styling advice.",
-      image: "/images/gallery_haircut.png"
+      name: "Rich Hair Color & Blow-Dry",
+      desc: "Deep burgundy tones with layered V-cut, conditioning treatment, and a glossy signature blow-dry.",
+      image: SITE_IMAGES.featured.hairColor,
     },
     {
-      name: "Luminous Gold Spa Facial",
-      price: 1500,
-      desc: "Deep skin purification, organic essential oils, facial massage, and gold collagen mask.",
-      image: "/images/gallery_interior.png"
+      name: "Elegant French Manicure",
+      desc: "Almond-shaped nails with a sheer nude base, precise burgundy French tips, and a premium gel finish.",
+      image: SITE_IMAGES.featured.frenchManicure,
     },
     {
-      name: "Precision Beard Styling",
-      price: 300,
-      desc: "Hot towel therapy, straight razor alignment, organic oil nourishment, and beard styling.",
-      image: "/images/gallery_coloring.png"
-    }
+      name: "Creative Nail Art",
+      desc: "Playful hand-painted designs with bold colours, custom patterns, and long-lasting gel polish.",
+      image: SITE_IMAGES.featured.nailArt,
+    },
   ];
 
   return (
@@ -175,7 +173,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
         style={{
           backgroundImage: theme === 'dark'
             ? 'linear-gradient(to right, rgba(0, 0, 0, 0.85) 40%, rgba(0, 0, 0, 0.4) 100%), url("/images/hero_salon.png")'
-            : 'linear-gradient(to right, rgba(255, 255, 255, 0.9) 40%, rgba(255, 255, 255, 0.5) 100%), url("/images/hero_salon.png")',
+            : 'linear-gradient(to right, rgba(243, 238, 228, 0.88) 0%, rgba(243, 238, 228, 0.62) 38%, rgba(243, 238, 228, 0.22) 62%, rgba(20, 18, 15, 0.12) 100%), url("/images/hero_salon.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -225,7 +223,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="hero-cta">
               <button className="btn btn-primary" onClick={onOpenBooking}>
                 Book Appointment
               </button>
@@ -255,8 +253,8 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               {/* Stat Counters */}
               <div className="stats-container">
                 <div className="stat-item">
-                  <h3>5+</h3>
-                  <p>Years Stylist Exp</p>
+                  <h3>8+</h3>
+                  <p>Years of Experience</p>
                 </div>
                 <div className="stat-item">
                   <h3>1-on-1</h3>

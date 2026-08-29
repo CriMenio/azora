@@ -5,7 +5,7 @@ const STAFF_MEMBERS = [
   {
     name: 'Preeti',
     role: 'Founder & Senior Beauty Specialist',
-    bio: 'With over 3 years of professional salon experience, Preeti specializes in custom bridal styling, advanced facials, and modern haircuts, delivering premium personal care to each guest.',
+    bio: 'With over 8 years of professional salon experience, Preeti specializes in custom bridal styling, advanced facials, and modern haircuts, delivering premium personal care to each guest.',
     image: '/images/gallery_makeup.png'
   }
 ];
@@ -74,9 +74,9 @@ export default function AboutUs() {
               padding: '1.5rem 2.5rem',
               backdropFilter: 'blur(5px)'
             }}>
-              <h4 style={{ color: 'var(--color-primary)', fontSize: '2rem', fontWeight: '600' }}>3+</h4>
+              <h4 style={{ color: 'var(--color-primary)', fontSize: '2rem', fontWeight: '600' }}>8</h4>
               <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#fff' }}>
-                Years of Styling Expertise
+                Years of Experience
               </p>
             </div>
           </div>

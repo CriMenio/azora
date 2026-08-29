@@ -1,355 +1,379 @@
-import React, { useState } from 'react';
-import { Eye, X, ZoomIn, Info } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Eye, X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { SITE_IMAGES } from '../assets/siteImages';
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'All Portfolio' },
-  { id: 'haircut', label: 'Haircuts' },
-  { id: 'coloring', label: 'Hair Coloring' },
-  { id: 'makeup', label: 'Bridal Makeup' },
-  { id: 'interior', label: 'Salon Interior' },
+  { id: 'hair', label: 'Hair' },
+  { id: 'nails', label: 'Nails' },
 ];
 
-const GALLERY_ITEMS = [
-  {
-    id: 1,
-    type: 'haircut',
-    title: 'Precision Textured Cut',
-    desc: 'Modern chic haircut with wispy face-framing layers and blowout.',
-    image: '/images/gallery_haircut.png'
-  },
-  {
-    id: 2,
-    type: 'coloring',
-    title: 'Sunset Balayage & Highlights',
-    desc: 'Warm dimensional copper and gold hues blended into dark chestnut hair.',
-    image: '/images/gallery_coloring.png'
-  },
-  {
-    id: 3,
-    type: 'makeup',
-    title: 'Royal Bridal Glow',
-    desc: 'Luxurious dewy finish with soft glam eyes and sophisticated nude lips.',
-    image: '/images/gallery_makeup.png'
-  },
-  {
-    id: 4,
-    type: 'interior',
-    title: 'Azora Washing & Styling Spa',
-    desc: 'Ambient lighting and modern leather wash basins for ultimate scalp pampering.',
-    image: '/images/gallery_interior.png'
-  }
-];
+const GALLERY_ITEMS = SITE_IMAGES.gallery;
+
+function GalleryCard({ item, index, onOpen }) {
+  const cardRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -6% 0px' }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [item.id]);
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={onOpen}
+      className={`gallery-item-card gallery-item-reveal${isVisible ? ' gallery-item-visible' : ''}`}
+      style={{ '--reveal-delay': `${Math.min(index, 8) * 0.08}s` }}
+    >
+      <div className="gallery-item-media">
+        <img
+          src={item.image}
+          alt={item.title}
+          className="gallery-img"
+          loading="lazy"
+        />
+        <div className="gallery-shine" aria-hidden="true" />
+
+        <div className="gallery-overlay">
+          <div className="gallery-overlay-icon">
+            <Eye size={16} />
+          </div>
+          <h3 className="gallery-overlay-title">{item.title}</h3>
+          <p className="gallery-overlay-desc">{item.desc}</p>
+        </div>
+      </div>
+
+      <div className="gallery-item-caption">
+        <h3>{item.title}</h3>
+        <p>{item.desc}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Gallery() {
   const [filter, setFilter] = useState('all');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [slideDirection, setSlideDirection] = useState(0);
+  const touchStartX = useRef(null);
 
   const filteredItems = filter === 'all' 
     ? GALLERY_ITEMS 
     : GALLERY_ITEMS.filter(item => item.type === filter);
 
   const openLightbox = (index) => {
+    setSlideDirection(0);
     setLightboxIndex(index);
   };
 
   const closeLightbox = () => {
     setLightboxIndex(null);
+    setSlideDirection(0);
   };
 
+  const handleFilterChange = (nextFilter) => {
+    if (nextFilter === filter) return;
+    setFilter(nextFilter);
+  };
+
+  const wrapIndex = useCallback((index) => {
+    const len = filteredItems.length;
+    if (len === 0) return 0;
+    return ((index % len) + len) % len;
+  }, [filteredItems.length]);
+
+  const goNext = useCallback(() => {
+    setSlideDirection(1);
+    setLightboxIndex((prevIndex) => wrapIndex(prevIndex + 1));
+  }, [wrapIndex]);
+
+  const goPrev = useCallback(() => {
+    setSlideDirection(-1);
+    setLightboxIndex((prevIndex) => wrapIndex(prevIndex - 1));
+  }, [wrapIndex]);
+
+  const hasMultipleItems = filteredItems.length > 1;
+
   const showNext = (e) => {
-    e.stopPropagation();
-    setLightboxIndex((prevIndex) => 
-      prevIndex === filteredItems.length - 1 ? 0 : prevIndex + 1
-    );
+    e?.stopPropagation?.();
+    goNext();
   };
 
   const showPrev = (e) => {
-    e.stopPropagation();
-    setLightboxIndex((prevIndex) => 
-      prevIndex === 0 ? filteredItems.length - 1 : prevIndex - 1
-    );
+    e?.stopPropagation?.();
+    goPrev();
   };
 
+  const handleTouchStart = (event) => {
+    touchStartX.current = event.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX.current === null || !hasMultipleItems) return;
+
+    const delta = event.changedTouches[0].clientX - touchStartX.current;
+    if (delta > 55) goPrev();
+    if (delta < -55) goNext();
+    touchStartX.current = null;
+  };
+
+  useEffect(() => {
+    if (lightboxIndex !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [lightboxIndex]);
+
+  useEffect(() => {
+    setLightboxIndex(null);
+    setSlideDirection(0);
+  }, [filter]);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'ArrowRight') goNext();
+      if (event.key === 'ArrowLeft') goPrev();
+      if (event.key === 'Escape') closeLightbox();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [lightboxIndex, goNext, goPrev]);
+
+  const lightboxMotionClass = slideDirection > 0
+    ? 'lightbox-image--next'
+    : slideDirection < 0
+      ? 'lightbox-image--prev'
+      : 'lightbox-image--enter';
+
+  const currentItem = lightboxIndex !== null ? filteredItems[lightboxIndex] : null;
+  const prevItem = lightboxIndex !== null ? filteredItems[wrapIndex(lightboxIndex - 1)] : null;
+  const nextItem = lightboxIndex !== null ? filteredItems[wrapIndex(lightboxIndex + 1)] : null;
+
   return (
-    <div className="animate-fade-in page-padding">
+    <div className="animate-fade-in page-padding gallery-page">
       <div className="container">
         {/* Page Header */}
         <div className="section-header">
           <span className="section-subtitle">Visual Inspiration</span>
           <h2 className="section-title">Our Work Gallery</h2>
-          <p style={{ color: 'var(--color-text-muted)', maxWidth: '600px', margin: '1.5rem auto 0', fontSize: '1rem' }}>
-            Real transformations created by our master stylists and artists. Discover your next look in our high-end style portfolio.
+          <p className="section-desc">
+            Real transformations created by our master stylists and artists. Discover your next look in our portfolio.
           </p>
         </div>
 
         {/* Filter Navigation */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          marginBottom: '4rem'
-        }}>
-          {FILTER_OPTIONS.map(opt => (
+        <div className="gallery-filters gallery-filters-reveal">
+          {FILTER_OPTIONS.map((opt, index) => (
             <button
               key={opt.id}
-              onClick={() => setFilter(opt.id)}
-              style={{
-                padding: '0.6rem 1.4rem',
-                fontSize: '0.8rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                fontWeight: '500',
-                cursor: 'pointer',
-                backgroundColor: filter === opt.id ? 'var(--color-primary)' : 'transparent',
-                color: filter === opt.id ? 'var(--color-text-dark)' : 'var(--color-text-muted)',
-                border: '1px solid',
-                borderColor: filter === opt.id ? 'var(--color-primary)' : 'var(--color-border)',
-                transition: 'var(--transition-fast)',
-                borderRadius: '0'
-              }}
-              className="gallery-tab-btn"
+              onClick={() => handleFilterChange(opt.id)}
+              className={`gallery-tab-btn${filter === opt.id ? ' active' : ''}`}
+              style={{ '--tab-delay': `${index * 0.08}s` }}
             >
-              {opt.label}
+              <span className="gallery-tab-label">{opt.label}</span>
+              {filter === opt.id && <span className="gallery-tab-glow" aria-hidden="true" />}
             </button>
           ))}
         </div>
 
         {/* Gallery Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '2.5rem',
-        }} className="gallery-grid-mobile">
+        <div className="gallery-grid" key={filter}>
           {filteredItems.map((item, index) => (
-            <div 
+            <GalleryCard
               key={item.id}
-              onClick={() => openLightbox(index)}
-              style={{
-                position: 'relative',
-                height: '420px',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-surface)',
-                boxShadow: 'var(--shadow-sm)'
-              }}
-              className="gallery-item-card"
-            >
-              <img 
-                src={item.image} 
-                alt={item.title} 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transition: 'var(--transition-smooth)'
-                }}
-                className="gallery-img"
-              />
-
-              {/* Hover Overlay */}
-              <div 
-                className="gallery-overlay"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '2rem',
-                  opacity: 0,
-                  transition: 'var(--transition-smooth)',
-                  textAlign: 'center'
-                }}
-              >
-                <div style={{ 
-                  color: 'var(--color-primary)', 
-                  marginBottom: '1rem',
-                  border: '1px solid var(--color-primary)',
-                  borderRadius: '50%',
-                  width: '50px',
-                  height: '50px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Eye size={20} />
-                </div>
-                <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-heading)', color: '#fff', marginBottom: '0.5rem' }}>
-                  {item.title}
-                </h3>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', maxWidth: '300px' }}>
-                  {item.desc}
-                </p>
-              </div>
-            </div>
+              item={item}
+              index={index}
+              onOpen={() => openLightbox(index)}
+            />
           ))}
         </div>
 
         {/* Full Immersive Lightbox Modal */}
-        {lightboxIndex !== null && (
+        {lightboxIndex !== null && currentItem && createPortal(
           <div 
-            className="lightbox-overlay"
+            className="lightbox-overlay lightbox-overlay--open"
             onClick={closeLightbox}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              zIndex: 2000,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: '2rem'
-            }}
           >
-            {/* Close Button */}
-            <button 
-              onClick={closeLightbox}
-              style={{
-                position: 'absolute',
-                top: '1.5rem',
-                right: '1.5rem',
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                cursor: 'pointer',
-                padding: '0.5rem',
-                zIndex: 10
-              }}
-            >
-              <X size={32} />
-            </button>
-
-            {/* Slider container */}
-            <div 
-              style={{
-                position: 'relative',
-                maxWidth: '900px',
-                width: '100%',
-                height: '70vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Prev Button */}
+            <div className="lightbox-top-bar" onClick={(e) => e.stopPropagation()}>
               <button 
-                onClick={showPrev}
-                style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  background: 'rgba(22, 22, 22, 0.6)',
-                  border: '1px solid var(--color-border)',
-                  color: '#fff',
-                  width: '50px',
-                  height: '50px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  zIndex: 5
-                }}
-                className="lightbox-nav-btn"
+                onClick={closeLightbox}
+                className="lightbox-back-btn"
+                aria-label="Back to gallery"
               >
-                &#10094;
+                <ArrowLeft size={18} />
+                <span className="lightbox-back-label-full">Back to Gallery</span>
+                <span className="lightbox-back-label-short">Back</span>
               </button>
-
-              <img 
-                src={filteredItems[lightboxIndex].image} 
-                alt={filteredItems[lightboxIndex].title}
-                style={{
-                  maxHeight: '100%',
-                  maxWidth: '100%',
-                  objectFit: 'contain',
-                  border: '1px solid var(--color-border)'
-                }}
-              />
-
-              {/* Next Button */}
               <button 
-                onClick={showNext}
-                style={{
-                  position: 'absolute',
-                  right: '1rem',
-                  background: 'rgba(22, 22, 22, 0.6)',
-                  border: '1px solid var(--color-border)',
-                  color: '#fff',
-                  width: '50px',
-                  height: '50px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  zIndex: 5
-                }}
-                className="lightbox-nav-btn"
+                onClick={closeLightbox}
+                className="lightbox-close-btn"
+                aria-label="Close gallery preview"
               >
-                &#10095;
+                <X size={22} />
               </button>
             </div>
 
-            {/* Details panel below image */}
             <div 
-              style={{
-                marginTop: '1.5rem',
-                textAlign: 'center',
-                maxWidth: '600px',
-                color: '#fff'
-              }}
+              className="lightbox-stage lightbox-stage--open"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
-                {filteredItems[lightboxIndex].title}
-              </h3>
-              <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.95rem' }}>
-                {filteredItems[lightboxIndex].desc}
-              </p>
+              <div className="lightbox-desktop-nav lightbox-desktop-nav--prev">
+                {hasMultipleItems && (
+                  <button 
+                    onClick={showPrev}
+                    className="lightbox-nav-btn lightbox-nav-prev"
+                    aria-label="Previous image"
+                  >
+                    <span className="lightbox-nav-ring" aria-hidden="true" />
+                    <span className="lightbox-nav-ring lightbox-nav-ring--delay" aria-hidden="true" />
+                    <ChevronLeft size={26} className="lightbox-nav-icon" />
+                  </button>
+                )}
+              </div>
+
+              <div className={`lightbox-triple-view${hasMultipleItems ? '' : ' lightbox-triple-view--single'}`}>
+                {hasMultipleItems && prevItem && (
+                  <button
+                    type="button"
+                    className="lightbox-preview lightbox-preview--prev"
+                    onClick={showPrev}
+                    aria-label={`Previous: ${prevItem.title}`}
+                  >
+                    <img src={prevItem.image} alt="" />
+                    <span className="lightbox-preview-label">Previous</span>
+                  </button>
+                )}
+
+                <div 
+                  className="lightbox-main-frame" 
+                  key={`frame-${lightboxIndex}`}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {hasMultipleItems && (
+                    <>
+                      <button
+                        type="button"
+                        className="lightbox-mobile-nav lightbox-mobile-nav--prev"
+                        onClick={showPrev}
+                        aria-label="Previous image"
+                      >
+                        <ChevronLeft size={22} />
+                      </button>
+                      <button
+                        type="button"
+                        className="lightbox-mobile-nav lightbox-mobile-nav--next"
+                        onClick={showNext}
+                        aria-label="Next image"
+                      >
+                        <ChevronRight size={22} />
+                      </button>
+                    </>
+                  )}
+                  <img 
+                    key={`${lightboxIndex}-${slideDirection}`}
+                    src={currentItem.image} 
+                    alt={currentItem.title}
+                    className={`lightbox-image ${lightboxMotionClass}`}
+                  />
+                </div>
+
+                {hasMultipleItems && nextItem && (
+                  <button
+                    type="button"
+                    className="lightbox-preview lightbox-preview--next"
+                    onClick={showNext}
+                    aria-label={`Next: ${nextItem.title}`}
+                  >
+                    <img src={nextItem.image} alt="" />
+                    <span className="lightbox-preview-label">Next</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="lightbox-desktop-nav lightbox-desktop-nav--next">
+                {hasMultipleItems && (
+                  <button 
+                    onClick={showNext}
+                    className="lightbox-nav-btn lightbox-nav-next"
+                    aria-label="Next image"
+                  >
+                    <span className="lightbox-nav-ring" aria-hidden="true" />
+                    <span className="lightbox-nav-ring lightbox-nav-ring--delay" aria-hidden="true" />
+                    <ChevronRight size={26} className="lightbox-nav-icon" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+
+            {hasMultipleItems && prevItem && nextItem && (
+              <div 
+                className="lightbox-mobile-strip"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="lightbox-mobile-thumb"
+                  onClick={showPrev}
+                  aria-label={`Previous: ${prevItem.title}`}
+                >
+                  <img src={prevItem.image} alt="" />
+                  <span>Prev</span>
+                </button>
+                <span className="lightbox-mobile-counter">
+                  {lightboxIndex + 1} / {filteredItems.length}
+                </span>
+                <button
+                  type="button"
+                  className="lightbox-mobile-thumb"
+                  onClick={showNext}
+                  aria-label={`Next: ${nextItem.title}`}
+                >
+                  <img src={nextItem.image} alt="" />
+                  <span>Next</span>
+                </button>
+              </div>
+            )}
+
+            <div 
+              className="lightbox-details lightbox-details--open"
+              onClick={(e) => e.stopPropagation()}
+              key={`details-${lightboxIndex}`}
+            >
+              {hasMultipleItems && (
+                <span className="lightbox-counter lightbox-counter--desktop">
+                  {lightboxIndex + 1} / {filteredItems.length}
+                </span>
+              )}
+              <h3>{currentItem.title}</h3>
+              <p>{currentItem.desc}</p>
+            </div>
+          </div>,
+          document.body
         )}
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        @media (max-width: 768px) {
-          .gallery-grid-mobile {
-            grid-template-columns: 1fr !important;
-          }
-          .gallery-item-card {
-            height: 320px !important;
-          }
-        }
-        .gallery-tab-btn:hover {
-          color: var(--color-primary) !important;
-          border-color: var(--color-primary) !important;
-        }
-        .gallery-item-card:hover .gallery-overlay {
-          opacity: 1 !important;
-        }
-        .gallery-item-card:hover .gallery-img {
-          transform: scale(1.06);
-        }
-        .lightbox-nav-btn {
-          transition: var(--transition-fast);
-        }
-        .lightbox-nav-btn:hover {
-          background-color: var(--color-primary) !important;
-          color: var(--color-text-dark) !important;
-          border-color: var(--color-primary) !important;
-        }
-      `}} />
     </div>
   );
 }
