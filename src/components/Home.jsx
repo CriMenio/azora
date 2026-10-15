@@ -4,6 +4,7 @@ import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetServi
 import ScrollDownButton from './ScrollDownButton';
 import Logo from './Logo';
 import { SITE_IMAGES } from '../assets/siteImages';
+import OfferSection from './OfferSection';
 
 export default function Home({ setActivePage, onOpenBooking, theme }) {
   const DEFAULT_TESTIMONIALS = [
@@ -284,6 +285,12 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
           </div>
         </div>
       </section>
+
+      {/* Special Festive Offers Section */}
+      <OfferSection 
+        onOpenBooking={(serviceId) => onOpenBooking(serviceId || 'navratri-offers', 2)} 
+        onBookCombo={(combo) => onOpenBooking(combo.id, 2)}
+      />
 
       {/* Featured Services */}
       <section className="section-padding">

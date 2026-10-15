@@ -19,6 +19,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(getInitialPage);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [bookingInitialStep, setBookingInitialStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
   
   const [theme, setTheme] = useState(() => {
@@ -72,14 +73,16 @@ export default function App() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  const handleOpenBooking = (serviceId = '') => {
+  const handleOpenBooking = (serviceId = '', step = 1) => {
     setSelectedServiceId(serviceId);
+    setBookingInitialStep(step);
     setIsBookingOpen(true);
   };
 
   const handleCloseBooking = () => {
     setIsBookingOpen(false);
     setSelectedServiceId('');
+    setBookingInitialStep(1);
   };
 
   const renderPage = () => {
@@ -88,14 +91,14 @@ export default function App() {
         return (
           <Home 
             setActivePage={navigateTo} 
-            onOpenBooking={() => handleOpenBooking()} 
+            onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)} 
             theme={theme}
           />
         );
       case 'services':
         return (
           <Services 
-            onBookService={(serviceId) => handleOpenBooking(serviceId)} 
+            onBookService={(serviceId, step) => handleOpenBooking(serviceId, step)} 
           />
         );
       case 'gallery':
@@ -108,7 +111,7 @@ export default function App() {
         return (
           <Home 
             setActivePage={navigateTo} 
-            onOpenBooking={() => handleOpenBooking()} 
+            onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)} 
             theme={theme}
           />
         );
@@ -153,6 +156,7 @@ export default function App() {
         isOpen={isBookingOpen} 
         onClose={handleCloseBooking} 
         initialServiceId={selectedServiceId} 
+        initialStep={bookingInitialStep}
         theme={theme}
       />
     </div>

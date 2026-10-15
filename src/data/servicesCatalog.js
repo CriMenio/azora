@@ -1,4 +1,5 @@
 export const BOOKING_CATEGORIES = [
+  { key: 'Special Offers', label: '🔥 Festive Offers & Combos' },
   { key: 'Hair', label: 'Hair Care' },
   { key: 'Nails', label: 'Nails & Nail Art' },
   { key: 'Beauty', label: 'Beauty & Skin' },
@@ -6,6 +7,16 @@ export const BOOKING_CATEGORIES = [
 ];
 
 export const SERVICES_CATALOG = [
+  {
+    id: 'navratri-offers',
+    name: 'Navratri Special Offers & Combos',
+    price: 699,
+    category: 'beauty',
+    bookingCategory: 'Beauty',
+    duration: '60 mins',
+    popular: true,
+    desc: 'Festive beauty combos, hair treatments, waxing with free D-Tan & grooming packages.',
+  },
   {
     id: 'haircoloring',
     name: 'Rich Hair Color & Blow-Dry',

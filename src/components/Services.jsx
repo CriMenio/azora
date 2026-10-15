@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Scissors, Sparkles, Smile } from 'lucide-react';
 import { SERVICES_CATALOG } from '../data/servicesCatalog';
+import OfferSection from './OfferSection';
 
 const SERVICES_CATEGORIES = [
   { id: 'all', label: 'All Services' },
@@ -34,6 +35,15 @@ export default function Services({ onBookService }) {
           <p className="section-desc">
             From signature hair colour and blow-dry styling to creative nail art — explore our most loved salon rituals.
           </p>
+        </div>
+
+        {/* Festive Special Offers Banner Section */}
+        <div style={{ marginBottom: '4rem' }}>
+          <OfferSection 
+            variant="compact" 
+            onOpenBooking={(serviceId) => onBookService(serviceId || 'navratri-offers', 2)} 
+            onBookCombo={(combo) => onBookService(combo.id, 2)}
+          />
         </div>
 
         {/* Category Filter Tabs */}

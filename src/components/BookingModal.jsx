@@ -3,9 +3,8 @@ import { X, Calendar, User, Phone, Mail, FileText, CheckCircle, Scissors, UserCh
 import { saveToSpreadsheet } from '../services/spreadsheetService';
 import { buildBookingWhatsAppMessage, shareReceiptToWhatsApp } from '../services/receiptShareService';
 import { BOOKING_CATEGORIES, getBookingServices } from '../data/servicesCatalog';
+import { getOfferCombosAsServices } from '../services/offerService';
 import UiSelect from './UiSelect';
-
-const SERVICES_DATA = getBookingServices();
 
 const STYLISTS = [
   { id: 'preeti', name: 'Preeti', role: 'Founder & Senior Specialist' },
@@ -17,10 +16,17 @@ const TIME_SLOTS = [
   '05:00 PM', '06:00 PM', '07:00 PM'
 ];
 
-export default function BookingModal({ isOpen, onClose, initialServiceId }) {
-  const [step, setStep] = useState(1);
+export default function BookingModal({ isOpen, onClose, initialServiceId, initialStep = 1 }) {
+  const [step, setStep] = useState(initialStep);
   const [bookingNo, setBookingNo] = useState('');
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
+
+  const allServices = React.useMemo(() => {
+    const base = getBookingServices();
+    const combos = getOfferCombosAsServices();
+    const existing = new Set(base.map((s) => s.id));
+    return [...base, ...combos.filter((s) => !existing.has(s.id))];
+  }, [isOpen]);
   const [formData, setFormData] = useState({
     serviceIds: [],
     stylistId: 'preeti',
@@ -40,7 +46,8 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
   useEffect(() => {
     if (initialServiceId) {
       setFormData(prev => ({ ...prev, serviceIds: [initialServiceId] }));
-      setStep(1); // Reset to first step if reopened with a new initial service
+      const startStep = initialStep === 2 || initialServiceId.startsWith('offer-') ? 2 : 1;
+      setStep(startStep);
       setBookingNo('');
     } else {
       setFormData(prev => ({
@@ -61,7 +68,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
     setWhatsappMessage('');
     setShareStatus('idle');
     hasAutoSharedRef.current = false;
-  }, [initialServiceId, isOpen]);
+  }, [initialServiceId, initialStep, isOpen]);
 
   const handleShareReceipt = useCallback(async () => {
     if (!receiptRef.current || !bookingNo || !whatsappMessage) return;
@@ -111,7 +118,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
   };
 
   const getSelectedServices = () => {
-    return SERVICES_DATA.filter(s => formData.serviceIds.includes(s.id));
+    return allServices.filter(s => formData.serviceIds.includes(s.id));
   };
 
   const getSelectedStylist = () => {
@@ -277,7 +284,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                   }}>
                     {formData.serviceIds.length === 0 
                       ? '-- Choose Services --' 
-                      : formData.serviceIds.map(id => SERVICES_DATA.find(s => s.id === id)?.name).join(', ')
+                      : formData.serviceIds.map(id => allServices.find(s => s.id === id)?.name).filter(Boolean).join(', ')
                     }
                   </span>
                   <span style={{ 
@@ -296,7 +303,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
                     className="service-dropdown-panel"
                   >
                     {BOOKING_CATEGORIES.map(({ key, label }) => {
-                      const catServices = SERVICES_DATA.filter(s => s.bookingCategory === key);
+                      const catServices = allServices.filter(s => s.bookingCategory === key);
                       if (catServices.length === 0) return null;
 
                       return (
@@ -387,9 +394,27 @@ export default function BookingModal({ isOpen, onClose, initialServiceId }) {
 
           {step === 2 && (
             <div className="animate-fade-in">
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}>
                 <Calendar size={18} style={{ color: 'var(--color-primary)' }} /> Appointment Schedule
               </h3>
+
+              {selectedServices.length > 0 && (
+                <div className="booking-service-notice">
+                  <div className="booking-service-notice-text">
+                    <span className="booking-service-notice-tag">Selected Package:</span>
+                    <strong className="booking-service-notice-name">
+                      {selectedServices.map(s => s.name).join(', ')}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="booking-service-change-btn"
+                    onClick={() => setStep(1)}
+                  >
+                    Change Service
+                  </button>
+                </div>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Preferred Date</label>

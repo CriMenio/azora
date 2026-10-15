@@ -1,19 +1,24 @@
 /**
- * MERGE THIS INTO YOUR EXISTING AzoraData Apps Script
- * ---------------------------------------------------
+ * AZORA SALON — Google Apps Script
+ * =================================
+ * Handles: Contact, Booking, Feedback, Billing forms + Gallery image upload.
+ *
  * SHEET SETUP (in Google Sheets):
- * 1. Add a new tab named exactly: Billing
- * 2. Row 1 headers (copy-paste into A1:K1):
+ * - "Contact Form" tab with headers: Timestamp | Name | Email | Subject | Message
+ * - "Bookings" tab with headers: Timestamp | Booking No | Name | Phone | Email | Service | Price | Duration | Stylist | Date | Time Slot | Notes
+ * - "Feedback" tab with headers: Timestamp | Name | Role | Quote | Stars
+ * - "Billing" tab — auto-created if missing
+ * - "Gallery" tab — auto-created on first image upload
  *
- *    Invoice No | Service Date | Client Name | Phone | Email | Services | Subtotal | Discount | Total | Notes | Created At
+ * GALLERY SETUP:
+ * - Images are stored in a Google Drive folder named "Azora Gallery" (auto-created).
+ * - Images are served via https://lh3.googleusercontent.com/d/<FILE_ID> (no expiry, public).
+ * - The folder is made public automatically when created.
  *
- * 3. Replace your doPost and doGet below with the updated versions
- * 4. Add the new helper functions at the bottom
- * 5. Deploy → Manage deployments → Edit → New version → Deploy
- *    (Must redeploy — saving alone is not enough)
+ * ADMIN PIN: In Apps Script → Project Settings → Script properties,
+ * add ADMIN_PIN = same value as VITE_ADMIN_PIN in .env (default: azora2024)
  *
- * ADMIN RECORDS (optional): In Apps Script → Project Settings → Script properties,
- * add ADMIN_PIN = same value as VITE_ADMIN_PIN on Netlify (default: azora2024)
+ * DEPLOY: After editing, go to Deploy → Manage deployments → Edit → New version → Deploy.
  */
 
 function doPost(e) {
@@ -27,7 +32,6 @@ function doPost(e) {
       if (!sheet) {
         return createResponse("error", "Contact Form tab not found");
       }
-
       sheet.appendRow([
         timestamp,
         data.name || "",
@@ -41,7 +45,6 @@ function doPost(e) {
       if (!sheet) {
         return createResponse("error", "Bookings tab not found");
       }
-
       sheet.appendRow([
         timestamp,
         data.bookingNo || "",
@@ -59,12 +62,10 @@ function doPost(e) {
 
     } else if (data.formType === "feedback") {
       var sheet = ss.getSheetByName("Feedback");
-
       if (!sheet) {
         sheet = ss.insertSheet("Feedback");
         sheet.appendRow(["Timestamp", "Name", "Role", "Quote", "Stars"]);
       }
-
       sheet.appendRow([
         timestamp,
         data.name || "",
@@ -74,9 +75,7 @@ function doPost(e) {
       ]);
 
     } else if (data.formType === "billing") {
-      // NEW: Admin billing invoices → Billing tab
       var billingSheet = getOrCreateBillingSheet(ss);
-
       billingSheet.appendRow([
         data.billNo || "",
         data.serviceDate || "",
@@ -96,6 +95,83 @@ function doPost(e) {
         return createJsonResponse({ error: "Unauthorized" });
       }
       return createJsonResponse(getAdminRecords());
+
+    } else if (data.formType === "galleryUpload") {
+      // Upload image to Google Drive, save metadata to Gallery sheet
+      if (!isValidAdminPin(String(data.pin || ""))) {
+        return createJsonResponse({ status: "error", error: "Unauthorized" });
+      }
+
+      try {
+        var folder = getOrCreateGalleryFolder();
+        var blob = Utilities.newBlob(
+          Utilities.base64Decode(data.base64Data),
+          data.mimeType || "image/jpeg",
+          data.fileName || ("gallery_" + Date.now() + ".jpg")
+        );
+        var file = folder.createFile(blob);
+
+        // Make the file publicly readable
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+        var fileId = file.getId();
+        // Use Google Drive thumbnail URL for high reliability and no hotlink blocking
+        var imageUrl = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w1200";
+
+        var gallerySheet = getOrCreateGallerySheet(ss);
+        gallerySheet.appendRow([
+          fileId,
+          data.title || data.fileName || "",
+          data.desc || "",
+          data.type || "hair",
+          imageUrl,
+          timestamp.toISOString()
+        ]);
+
+        return createJsonResponse({
+          status: "success",
+          url: imageUrl,
+          fileId: fileId,
+          message: "Image uploaded successfully"
+        });
+      } catch (uploadError) {
+        return createJsonResponse({ status: "error", error: uploadError.toString() });
+      }
+
+    } else if (data.formType === "galleryDelete") {
+      // Delete image from Drive and remove from Gallery sheet
+      if (!isValidAdminPin(String(data.pin || ""))) {
+        return createJsonResponse({ status: "error", error: "Unauthorized" });
+      }
+
+      try {
+        if (data.fileId) {
+          try {
+            var driveFile = DriveApp.getFileById(data.fileId);
+            driveFile.setTrashed(true);
+          } catch (driveErr) {
+            // File may already be deleted; continue to remove sheet row
+          }
+        }
+
+        // Remove row from Gallery sheet matching the fileId
+        if (data.fileId) {
+          var gallerySheet = ss.getSheetByName("Gallery");
+          if (gallerySheet) {
+            var values = gallerySheet.getDataRange().getValues();
+            for (var i = values.length - 1; i >= 1; i--) {
+              if (String(values[i][0]) === String(data.fileId)) {
+                gallerySheet.deleteRow(i + 1);
+                break;
+              }
+            }
+          }
+        }
+
+        return createJsonResponse({ status: "success", message: "Image deleted" });
+      } catch (deleteError) {
+        return createJsonResponse({ status: "error", error: deleteError.toString() });
+      }
 
     } else {
       return createResponse("error", "Unsupported or missing formType");
@@ -125,7 +201,45 @@ function doGet(e) {
       return createJsonResponse(getAdminRecords());
     }
 
-    // Existing testimonials (Feedback sheet)
+    if (action === "gallery") {
+      // Public endpoint — returns all gallery items for the public gallery page
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var gallerySheet = ss.getSheetByName("Gallery");
+      if (!gallerySheet) {
+        return createJsonResponse([]);
+      }
+
+      var values = gallerySheet.getDataRange().getValues();
+      if (values.length <= 1) {
+        return createJsonResponse([]);
+      }
+
+      var items = [];
+      for (var i = 1; i < values.length; i++) {
+        var fileId = values[i][0];
+        var imageUrl = values[i][4];
+        if (!fileId || !imageUrl) continue;
+        var resolvedImage = (imageUrl && imageUrl.indexOf("drive.google.com/thumbnail") !== -1)
+          ? imageUrl
+          : ("https://drive.google.com/thumbnail?id=" + fileId + "&sz=w1200");
+        items.push({
+          id: String(i),
+          fileId: String(fileId),
+          title: values[i][1] || "",
+          desc: values[i][2] || "",
+          type: values[i][3] || "hair",
+          image: resolvedImage,
+          uploadedAt: values[i][5] ? String(values[i][5]) : "",
+          rowIndex: i + 1
+        });
+      }
+
+      // Newest first
+      items.reverse();
+      return createJsonResponse(items);
+    }
+
+    // Default: testimonials from Feedback sheet
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Feedback");
 
@@ -187,7 +301,7 @@ function doGet(e) {
   }
 }
 
-// ---------- ADMIN RECORDS (read sheet data for admin panel) ----------
+// ---------- ADMIN PIN ----------
 
 function getAdminPin() {
   var stored = PropertiesService.getScriptProperties().getProperty("ADMIN_PIN");
@@ -197,6 +311,8 @@ function getAdminPin() {
 function isValidAdminPin(pin) {
   return String(pin || "") === getAdminPin();
 }
+
+// ---------- ADMIN RECORDS (read sheet data for admin panel) ----------
 
 function formatSheetDate(value) {
   if (value instanceof Date) {
@@ -294,7 +410,7 @@ function getAdminRecords() {
   };
 }
 
-// ---------- NEW BILLING HELPERS ----------
+// ---------- BILLING HELPERS ----------
 
 var BILL_PREFIX = "AZR";
 
@@ -358,14 +474,48 @@ function getNextBillNumber(dateStr) {
   };
 }
 
-// ---------- EXISTING HELPERS (keep as-is) ----------
+// ---------- GALLERY HELPERS ----------
+
+function getOrCreateGalleryFolder() {
+  var folderName = "Azora Gallery";
+  var folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  var folder = DriveApp.createFolder(folderName);
+  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return folder;
+}
+
+function getOrCreateGallerySheet(ss) {
+  var sheet = ss.getSheetByName("Gallery");
+  if (!sheet) {
+    sheet = ss.insertSheet("Gallery");
+    sheet.appendRow([
+      "File ID",
+      "Title",
+      "Description",
+      "Type",
+      "Image URL",
+      "Uploaded At"
+    ]);
+    sheet.getRange(1, 1, 1, 6).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(5, 450);
+  }
+  return sheet;
+}
+
+// ---------- RESPONSE HELPERS ----------
 
 function createResponse(status, message) {
-  return ContentService.createTextOutput(JSON.stringify({ "status": status, "message": message }))
-                       .setMimeType(ContentService.MimeType.JSON);
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: status, message: message }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function createJsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-                       .setMimeType(ContentService.MimeType.JSON);
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }

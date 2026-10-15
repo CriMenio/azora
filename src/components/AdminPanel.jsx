@@ -15,6 +15,8 @@ import {
   Database,
   Menu,
   X,
+  Images,
+  Sparkles,
 } from 'lucide-react';
 import { SERVICES_CATALOG, formatCurrency } from '../data/servicesCatalog';
 import {
@@ -29,6 +31,8 @@ import {
 } from '../services/spreadsheetService';
 import { getLocalNextBillNumber } from '../services/billNumberService';
 import AdminRecords from './AdminRecords';
+import AdminGallery from './AdminGallery';
+import AdminOffers from './AdminOffers';
 import Logo from './Logo';
 import UiSelect from './UiSelect';
 
@@ -217,8 +221,13 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
 
   const handleAdminViewChange = (view) => {
     setAdminView(view);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     closeMobileMenu();
   };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [adminView]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -484,6 +493,20 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
           </button>
           <button
             type="button"
+            className={`admin-mobile-menu-item${adminView === 'gallery' ? ' active' : ''}`}
+            onClick={() => handleAdminViewChange('gallery')}
+          >
+            <Images size={18} /> Gallery
+          </button>
+          <button
+            type="button"
+            className={`admin-mobile-menu-item${adminView === 'offers' ? ' active' : ''}`}
+            onClick={() => handleAdminViewChange('offers')}
+          >
+            <Sparkles size={18} /> Offers & Packages
+          </button>
+          <button
+            type="button"
             className="admin-mobile-menu-item"
             onClick={() => {
               toggleTheme();
@@ -507,16 +530,30 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
               <button
                 type="button"
                 className={`admin-nav-tab${adminView === 'billing' ? ' active' : ''}`}
-                onClick={() => setAdminView('billing')}
+                onClick={() => handleAdminViewChange('billing')}
               >
                 <Receipt size={16} /> Billing
               </button>
               <button
                 type="button"
                 className={`admin-nav-tab${adminView === 'records' ? ' active' : ''}`}
-                onClick={() => setAdminView('records')}
+                onClick={() => handleAdminViewChange('records')}
               >
                 <Database size={16} /> Sheet Records
+              </button>
+              <button
+                type="button"
+                className={`admin-nav-tab${adminView === 'gallery' ? ' active' : ''}`}
+                onClick={() => handleAdminViewChange('gallery')}
+              >
+                <Images size={16} /> Gallery
+              </button>
+              <button
+                type="button"
+                className={`admin-nav-tab${adminView === 'offers' ? ' active' : ''}`}
+                onClick={() => handleAdminViewChange('offers')}
+              >
+                <Sparkles size={16} /> Offers & Packages
               </button>
             </nav>
           </div>
@@ -534,6 +571,10 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
       <main className="admin-main container">
         {adminView === 'records' ? (
           <AdminRecords adminPin={getAdminPin()} />
+        ) : adminView === 'gallery' ? (
+          <AdminGallery adminPin={getAdminPin()} />
+        ) : adminView === 'offers' ? (
+          <AdminOffers adminPin={getAdminPin()} />
         ) : (
         <div className="admin-grid">
           {/* Form Column */}

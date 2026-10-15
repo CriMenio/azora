@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Eye, X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { SITE_IMAGES } from '../assets/siteImages';
+import { fetchGalleryItems } from '../services/galleryService';
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'All Portfolio' },
@@ -9,7 +10,7 @@ const FILTER_OPTIONS = [
   { id: 'nails', label: 'Nails' },
 ];
 
-const GALLERY_ITEMS = SITE_IMAGES.gallery;
+const STATIC_GALLERY_ITEMS = SITE_IMAGES.gallery;
 
 function GalleryCard({ item, index, onOpen }) {
   const cardRef = useRef(null);
@@ -46,6 +47,7 @@ function GalleryCard({ item, index, onOpen }) {
           alt={item.title}
           className="gallery-img"
           loading="lazy"
+          referrerPolicy="no-referrer"
         />
         <div className="gallery-shine" aria-hidden="true" />
 
@@ -54,13 +56,13 @@ function GalleryCard({ item, index, onOpen }) {
             <Eye size={16} />
           </div>
           <h3 className="gallery-overlay-title">{item.title}</h3>
-          <p className="gallery-overlay-desc">{item.desc}</p>
+          {item.desc && <p className="gallery-overlay-desc">{item.desc}</p>}
         </div>
       </div>
 
       <div className="gallery-item-caption">
         <h3>{item.title}</h3>
-        <p>{item.desc}</p>
+        {item.desc && <p>{item.desc}</p>}
       </div>
     </div>
   );
@@ -70,11 +72,43 @@ export default function Gallery() {
   const [filter, setFilter] = useState('all');
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [slideDirection, setSlideDirection] = useState(0);
+  const [dynamicItems, setDynamicItems] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(true);
   const touchStartX = useRef(null);
 
-  const filteredItems = filter === 'all' 
-    ? GALLERY_ITEMS 
-    : GALLERY_ITEMS.filter(item => item.type === filter);
+  // Fetch admin-uploaded images from Google Sheets / Drive
+  useEffect(() => {
+    let cancelled = false;
+    setGalleryLoading(true);
+    fetchGalleryItems()
+      .then((items) => {
+        if (!cancelled) {
+          // Normalise dynamic items to match gallery shape
+          const normalised = items.map((item) => ({
+            id: `dyn-${item.id}`,
+            type: item.type || 'hair',
+            title: item.title || '',
+            desc: item.desc || '',
+            image: item.image,
+          }));
+          setDynamicItems(normalised);
+        }
+      })
+      .catch(() => {
+        // Silently fall back to static images only
+      })
+      .finally(() => {
+        if (!cancelled) setGalleryLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Dynamic items first, then static originals
+  const ALL_ITEMS = [...dynamicItems, ...STATIC_GALLERY_ITEMS];
+
+  const filteredItems = filter === 'all'
+    ? ALL_ITEMS
+    : ALL_ITEMS.filter(item => item.type === filter);
 
   const openLightbox = (index) => {
     setSlideDirection(0);
@@ -199,6 +233,9 @@ export default function Gallery() {
         </div>
 
         {/* Gallery Grid */}
+        {galleryLoading && dynamicItems.length === 0 && (
+          <p className="gallery-loading-hint">Loading latest uploads&hellip;</p>
+        )}
         <div className="gallery-grid" key={filter}>
           {filteredItems.map((item, index) => (
             <GalleryCard
@@ -261,7 +298,7 @@ export default function Gallery() {
                     onClick={showPrev}
                     aria-label={`Previous: ${prevItem.title}`}
                   >
-                    <img src={prevItem.image} alt="" />
+                    <img src={prevItem.image} alt="" referrerPolicy="no-referrer" />
                     <span className="lightbox-preview-label">Previous</span>
                   </button>
                 )}
@@ -297,6 +334,7 @@ export default function Gallery() {
                     src={currentItem.image} 
                     alt={currentItem.title}
                     className={`lightbox-image ${lightboxMotionClass}`}
+                    referrerPolicy="no-referrer"
                   />
                 </div>
 
@@ -307,7 +345,7 @@ export default function Gallery() {
                     onClick={showNext}
                     aria-label={`Next: ${nextItem.title}`}
                   >
-                    <img src={nextItem.image} alt="" />
+                    <img src={nextItem.image} alt="" referrerPolicy="no-referrer" />
                     <span className="lightbox-preview-label">Next</span>
                   </button>
                 )}
@@ -339,7 +377,7 @@ export default function Gallery() {
                   onClick={showPrev}
                   aria-label={`Previous: ${prevItem.title}`}
                 >
-                  <img src={prevItem.image} alt="" />
+                  <img src={prevItem.image} alt="" referrerPolicy="no-referrer" />
                   <span>Prev</span>
                 </button>
                 <span className="lightbox-mobile-counter">
@@ -351,7 +389,7 @@ export default function Gallery() {
                   onClick={showNext}
                   aria-label={`Next: ${nextItem.title}`}
                 >
-                  <img src={nextItem.image} alt="" />
+                  <img src={nextItem.image} alt="" referrerPolicy="no-referrer" />
                   <span>Next</span>
                 </button>
               </div>
@@ -368,7 +406,7 @@ export default function Gallery() {
                 </span>
               )}
               <h3>{currentItem.title}</h3>
-              <p>{currentItem.desc}</p>
+              {currentItem.desc && <p className="lightbox-desc">{currentItem.desc}</p>}
             </div>
           </div>,
           document.body
