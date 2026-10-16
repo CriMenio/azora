@@ -13,11 +13,14 @@ import {
   X,
   Loader,
   Image as ImageIcon,
+  AlertCircle,
 } from 'lucide-react';
 import {
   getOfferConfig,
   saveOfferConfig,
   resetOfferConfig,
+  saveOfferToSpreadsheet,
+  fetchOfferFromSpreadsheet,
   DEFAULT_OFFER_CONFIG,
 } from '../services/offerService';
 import { uploadGalleryImage } from '../services/galleryService';
@@ -48,9 +51,12 @@ export default function AdminOffers({ adminPin }) {
 
   // Save feedback
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [savingToSheet, setSavingToSheet] = useState(false);
 
   useEffect(() => {
+    fetchOfferFromSpreadsheet();
     const handleOfferUpdated = (e) => {
       if (e.detail) setConfig(e.detail);
     };
@@ -61,6 +67,7 @@ export default function AdminOffers({ adminPin }) {
   const handleFieldChange = (field, value) => {
     setConfig((prev) => ({ ...prev, [field]: value }));
     setSaveSuccess(false);
+    setSaveError('');
     setHasUnsavedChanges(true);
   };
 
@@ -208,21 +215,31 @@ export default function AdminOffers({ adminPin }) {
     }
   };
 
-  // Save all config changes
-  const handleSaveAll = () => {
-    const res = saveOfferConfig(config);
-    if (res.success) {
-      setSaveSuccess(true);
-      setHasUnsavedChanges(false);
-      setTimeout(() => setSaveSuccess(false), 3500);
+  // Save all config changes to Google Sheet and localStorage
+  const handleSaveAll = async () => {
+    setSavingToSheet(true);
+    setSaveError('');
+    try {
+      const res = await saveOfferToSpreadsheet(config, adminPin);
+      if (res.success) {
+        setSaveSuccess(true);
+        setSaveError('');
+        setHasUnsavedChanges(false);
+        setTimeout(() => setSaveSuccess(false), 4000);
+      } else {
+        setSaveError(res.error || 'Failed to save to Google Sheet.');
+      }
+    } finally {
+      setSavingToSheet(false);
     }
   };
 
   // Reset to default
-  const handleReset = () => {
+  const handleReset = async () => {
     if (window.confirm('Reset offer settings to default Navratri configuration?')) {
       resetOfferConfig();
       setConfig(DEFAULT_OFFER_CONFIG);
+      await saveOfferToSpreadsheet(DEFAULT_OFFER_CONFIG, adminPin);
       setSaveSuccess(true);
       setHasUnsavedChanges(false);
       setTimeout(() => setSaveSuccess(false), 3500);
@@ -245,7 +262,7 @@ export default function AdminOffers({ adminPin }) {
               </span>
             </div>
             <p className="admin-offers-subheading">
-              Upload seasonal banner flyers, edit offer copy and highlight tags, and manage customer-bookable combo packages.
+              Upload seasonal banner flyers, edit offer copy and highlight tags, and manage customer-bookable combo packages synced with Google Sheets.
             </p>
           </div>
         </div>
@@ -268,6 +285,7 @@ export default function AdminOffers({ adminPin }) {
             type="button"
             className="btn btn-secondary admin-offers-reset-btn"
             onClick={handleReset}
+            disabled={savingToSheet}
             title="Reset to factory defaults"
           >
             <RotateCcw size={15} /> Reset
@@ -277,8 +295,10 @@ export default function AdminOffers({ adminPin }) {
             type="button"
             className={`btn btn-primary admin-offers-save-btn ${hasUnsavedChanges ? 'highlight-save' : ''}`}
             onClick={handleSaveAll}
+            disabled={savingToSheet}
           >
-            <Save size={16} /> Save Changes
+            {savingToSheet ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
+            {savingToSheet ? 'Saving to Sheet...' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -286,7 +306,45 @@ export default function AdminOffers({ adminPin }) {
       {saveSuccess && (
         <div className="admin-offers-alert admin-offers-alert--success">
           <CheckCircle size={18} />
-          <span>All offer changes saved successfully! Updates are live on Home and Services screens.</span>
+          <span>All offer changes and poster saved to Google Sheet ("Offers" tab) &amp; Live Website!</span>
+        </div>
+      )}
+
+      {saveError && (
+        <div
+          className="admin-offers-alert"
+          style={{
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#fca5a5',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+          }}
+        >
+          <AlertCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ flex: 1, fontSize: '0.9rem', lineHeight: 1.45 }}>
+            <strong style={{ color: '#f87171' }}>Sheet Sync Notice: </strong>
+            {saveError}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSaveError('')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fca5a5',
+              cursor: 'pointer',
+              padding: '2px',
+              display: 'flex',
+            }}
+            title="Dismiss notice"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 

@@ -7,6 +7,7 @@ import {
   Receipt,
   Star,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import { getAdminRecords } from '../services/spreadsheetService';
 import { formatCurrency } from '../data/servicesCatalog';
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'contacts', label: 'Contact', icon: Mail },
   { id: 'billing', label: 'Billing', icon: Receipt },
   { id: 'feedback', label: 'Feedback', icon: MessageSquare },
+  { id: 'offers', label: 'Offers', icon: Sparkles },
 ];
 
 function formatDate(value) {
@@ -184,6 +186,59 @@ export default function AdminRecords({ adminPin }) {
               ),
             },
             { key: 'quote', label: 'Review' },
+          ],
+        };
+      case 'offers':
+        return {
+          rows: filterRows(records.offersHistory || [], [
+            'title',
+            'badge',
+            'visibility',
+            'dateRange',
+            'tags',
+            'packages',
+          ]),
+          emptyMessage: 'No offer updates saved yet in Google Sheet.',
+          columns: [
+            { key: 'timestamp', label: 'Saved At', render: (r) => formatDate(r.timestamp) },
+            {
+              key: 'visibility',
+              label: 'Site Visibility',
+              render: (r) => (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background:
+                      String(r.visibility).toLowerCase() === 'visible' || r.visibility === 'true'
+                        ? 'rgba(34, 197, 94, 0.15)'
+                        : 'rgba(239, 68, 68, 0.15)',
+                    color:
+                      String(r.visibility).toLowerCase() === 'visible' || r.visibility === 'true'
+                        ? '#4ade80'
+                        : '#f87171',
+                  }}
+                >
+                  {r.visibility || 'Visible'}
+                </span>
+              ),
+            },
+            { key: 'badge', label: 'Super-Title' },
+            { key: 'title', label: 'Offer Title' },
+            { key: 'dateRange', label: 'Validity' },
+            { key: 'tags', label: 'Tags' },
+            {
+              key: 'packages',
+              label: 'Packages with Amount',
+              render: (r) => (
+                <div style={{ whiteSpace: 'pre-line', maxWidth: '320px', fontSize: '0.82rem', lineHeight: 1.4 }}>
+                  {r.packages || '—'}
+                </div>
+              ),
+            },
           ],
         };
       default:

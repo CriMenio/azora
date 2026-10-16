@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles, Calendar, Phone, MessageCircle, Maximize2, X, Tag, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { SITE_IMAGES } from '../assets/siteImages';
-import { getOfferConfig } from '../services/offerService';
+import { getOfferConfig, fetchOfferFromSpreadsheet } from '../services/offerService';
 
 export default function OfferSection({ onOpenBooking, onBookCombo, variant = 'full' }) {
   const [offerConfig, setOfferConfig] = useState(getOfferConfig);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
-  // Sync with live updates when admin edits offers
+  // Sync with live updates when admin edits offers & fetch latest on mount
   useEffect(() => {
+    fetchOfferFromSpreadsheet();
+
     const handleOfferUpdate = (e) => {
       if (e?.detail) {
         setOfferConfig(e.detail);

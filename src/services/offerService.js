@@ -62,6 +62,15 @@ export const DEFAULT_OFFER_CONFIG = {
   ],
 };
 
+function getWebhookUrl() {
+  const url = import.meta.env.VITE_SPREADSHEET_WEBHOOK_URL;
+  return url?.trim() || '';
+}
+
+function isWebhookConfigured(url) {
+  return url && url !== 'YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE' && url.trim() !== '';
+}
+
 /**
  * Returns the currently active offer configuration from localStorage,
  * falling back to DEFAULT_OFFER_CONFIG.
@@ -82,6 +91,112 @@ export function getOfferConfig() {
   } catch (e) {
     console.error('Failed to parse offer config:', e);
     return DEFAULT_OFFER_CONFIG;
+  }
+}
+
+/**
+ * Fetches the latest offers directly from Google Sheet ("Offers" tab).
+ * Syncs with localStorage and broadcasts update event.
+ */
+export async function fetchOfferFromSpreadsheet() {
+  const webhookUrl = getWebhookUrl();
+  if (!isWebhookConfigured(webhookUrl)) return null;
+
+  try {
+    const url = `${webhookUrl}${webhookUrl.includes('?') ? '&' : '?'}action=offers`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data && data.title && Array.isArray(data.combos)) {
+      const merged = {
+        ...DEFAULT_OFFER_CONFIG,
+        ...data,
+        combos: data.combos.length > 0 ? data.combos : DEFAULT_OFFER_CONFIG.combos,
+        tags: Array.isArray(data.tags) ? data.tags : DEFAULT_OFFER_CONFIG.tags,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('azora-offer-updated', { detail: merged }));
+      return merged;
+    }
+    return null;
+  } catch (err) {
+    console.warn('Could not fetch offers from Google Sheet:', err);
+    return null;
+  }
+}
+
+/**
+ * Saves offer config and optional poster to Google Sheet ("Offers" tab) via Apps Script.
+ */
+export async function saveOfferToSpreadsheet(config, adminPin, base64Poster = null) {
+  // Always persist locally first for instant reactivity
+  saveOfferConfig(config);
+
+  const webhookUrl = getWebhookUrl();
+  if (!isWebhookConfigured(webhookUrl)) {
+    return { success: true, localOnly: true, message: 'Saved locally in browser' };
+  }
+
+  try {
+    let posterBase64 = base64Poster;
+    let mimeType = 'image/jpeg';
+    if (!posterBase64 && config.image && typeof config.image === 'string' && config.image.startsWith('data:image/')) {
+      const match = config.image.match(/^data:(image\/[a-zA-Z0-9.+_-]+);base64,(.+)$/);
+      if (match) {
+        mimeType = match[1];
+        posterBase64 = match[2];
+      }
+    }
+
+    const payload = {
+      formType: 'saveOffer',
+      pin: adminPin,
+      isActive: config.isActive !== false,
+      title: config.title || '',
+      badge: config.badge || '',
+      desc: config.desc || '',
+      dateRange: config.dateRange || '',
+      tags: Array.isArray(config.tags) ? config.tags : [],
+      image: config.image || '',
+      combos: Array.isArray(config.combos) ? config.combos : [],
+      base64Poster: posterBase64 || undefined,
+      mimeType: mimeType,
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await response.text();
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return { success: false, error: 'Invalid response from Google Sheets webhook' };
+    }
+
+    if (parsed.status === 'success') {
+      if (parsed.config) {
+        saveOfferConfig(parsed.config);
+      }
+      return { success: true, message: 'Saved to Google Sheet successfully', config: parsed.config || config };
+    }
+
+    const rawError = parsed.error || parsed.message || 'Failed to save to Google Sheet';
+    if (String(rawError).includes('Unsupported or missing formType')) {
+      return {
+        success: false,
+        error: 'Apps Script needs to be updated. Open your Google Sheet → Extensions → Apps Script, paste the updated google-apps-script/Code.gs, and Deploy a New Version.',
+      };
+    }
+
+    return { success: false, error: rawError };
+  } catch (err) {
+    console.error('Failed to save offers to Google Sheet:', err);
+    return { success: false, error: err.message };
   }
 }
 

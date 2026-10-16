@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Calendar, User, Phone, Mail, FileText, CheckCircle, Scissors, UserCheck, MessageCircle, Download } from 'lucide-react';
 import { saveToSpreadsheet } from '../services/spreadsheetService';
-import { buildBookingWhatsAppMessage, shareReceiptToWhatsApp } from '../services/receiptShareService';
+import { captureElementAsBlob, downloadBlob } from '../services/imageCaptureService';
 import { BOOKING_CATEGORIES, getBookingServices } from '../data/servicesCatalog';
 import { getOfferCombosAsServices } from '../services/offerService';
 import UiSelect from './UiSelect';
@@ -15,6 +15,38 @@ const TIME_SLOTS = [
   '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', 
   '05:00 PM', '06:00 PM', '07:00 PM'
 ];
+
+const WHATSAPP_SALON_NUMBER = '917021929588';
+
+function buildBookingWhatsAppMessage({
+  bookingNo,
+  name,
+  phone,
+  email,
+  services,
+  stylist,
+  date,
+  timeSlot,
+  notes,
+}) {
+  return [
+    '✨ *AZORA SALON — APPOINTMENT BOOKING* ✨',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━',
+    `🆔 *Appointment No:* ${bookingNo}`,
+    `👤 *Client Name:* ${name}`,
+    `📞 *Phone Number:* ${phone}`,
+    email?.trim() ? `✉️ *Email:* ${email.trim()}` : null,
+    `💇 *Services:* ${services}`,
+    `⭐ *Stylist:* ${stylist}`,
+    `📅 *Date:* ${date}`,
+    `⏰ *Time Slot:* ${timeSlot}`,
+    notes?.trim() ? `📝 *Special Requests:* ${notes.trim()}` : null,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '💬 _Hi Azora Salon, I have confirmed my booking on your website. Please find my appointment details above!_',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
 
 export default function BookingModal({ isOpen, onClose, initialServiceId, initialStep = 1 }) {
   const [step, setStep] = useState(initialStep);
@@ -38,10 +70,9 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
     notes: ''
   });
   const [errors, setErrors] = useState({});
-  const [whatsappMessage, setWhatsappMessage] = useState('');
-  const [shareStatus, setShareStatus] = useState('idle');
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
+  const [whatsappUrl, setWhatsappUrl] = useState('');
   const receiptRef = useRef(null);
-  const hasAutoSharedRef = useRef(false);
 
   useEffect(() => {
     if (initialServiceId) {
@@ -65,34 +96,21 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
       setBookingNo('');
     }
     setErrors({});
-    setWhatsappMessage('');
-    setShareStatus('idle');
-    hasAutoSharedRef.current = false;
+    setWhatsappUrl('');
   }, [initialServiceId, initialStep, isOpen]);
 
-  const handleShareReceipt = useCallback(async () => {
-    if (!receiptRef.current || !bookingNo || !whatsappMessage) return;
-
-    setShareStatus('sharing');
+  const handleDownloadReceipt = async () => {
+    if (!receiptRef.current || !bookingNo) return;
+    setDownloadingReceipt(true);
     try {
-      const result = await shareReceiptToWhatsApp(receiptRef.current, whatsappMessage, bookingNo);
-      setShareStatus(result.method === 'native-share' ? 'shared-native' : 'shared-download');
+      const blob = await captureElementAsBlob(receiptRef.current);
+      downloadBlob(blob, `azora-appointment-${bookingNo}.png`);
     } catch (error) {
-      console.error('Failed to share receipt:', error);
-      setShareStatus('error');
+      console.error('Failed to download receipt:', error);
+    } finally {
+      setDownloadingReceipt(false);
     }
-  }, [bookingNo, whatsappMessage]);
-
-  useEffect(() => {
-    if (step !== 4 || !bookingNo || !whatsappMessage || hasAutoSharedRef.current) return;
-
-    hasAutoSharedRef.current = true;
-    const timer = setTimeout(() => {
-      handleShareReceipt();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [step, bookingNo, whatsappMessage, handleShareReceipt]);
+  };
 
   if (!isOpen) return null;
 
@@ -177,36 +195,49 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
 
       const activeServices = getSelectedServices();
       const activeStylist = getSelectedStylist();
+      const servicesString = activeServices.map(s => s.name).join(', ');
+      const stylistName = activeStylist?.name || 'Preeti';
 
-      // Save data to Google Sheet (pricing and duration removed per preference)
+      // 1. Save data to Google Sheet
       saveToSpreadsheet({
         formType: 'booking',
         bookingNo: generatedNo,
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
-        service: activeServices.map(s => s.name).join(', '),
+        service: servicesString,
         price: '',
         duration: '',
-        stylist: activeStylist?.name || 'Preeti',
+        stylist: stylistName,
         date: formData.date,
         timeSlot: formData.timeSlot,
         notes: formData.notes
       });
 
+      // 2. Build pre-filled WhatsApp message template
       const messageText = buildBookingWhatsAppMessage({
         bookingNo: generatedNo,
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
-        services: activeServices.map(s => s.name).join(', '),
-        stylist: activeStylist?.name || 'Preeti',
+        services: servicesString,
+        stylist: stylistName,
         date: formData.date,
         timeSlot: formData.timeSlot,
         notes: formData.notes,
       });
 
-      setWhatsappMessage(messageText);
+      const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_SALON_NUMBER}&text=${encodeURIComponent(messageText)}`;
+      setWhatsappUrl(url);
+
+      // 3. Immediately open WhatsApp chat with Azora Salon (Click to Chat - no contact saving needed)
+      try {
+        window.open(url, '_blank');
+      } catch (err) {
+        console.warn('Auto-redirect to WhatsApp blocked by browser:', err);
+      }
+
+      // 4. Advance to Step 4 to show confirmed template UI
       setStep(4);
     }
   };
@@ -572,101 +603,138 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
           )}
 
           {step === 4 && (
-            <div className="animate-scale-up" style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(212, 175, 55, 0.1)', color: 'var(--color-primary)', marginBottom: '1.5rem' }}>
-                <CheckCircle size={44} />
+            <div className="animate-scale-up" style={{ textAlign: 'center', padding: '0.5rem 0 1rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', borderRadius: '50%', backgroundColor: 'rgba(212, 175, 55, 0.12)', color: 'var(--color-primary)', marginBottom: '1.25rem' }}>
+                <CheckCircle size={38} />
               </div>
               
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', fontFamily: 'var(--font-heading)' }}>
+              <h3 style={{ fontSize: '1.6rem', fontWeight: '600', marginBottom: '0.35rem', fontFamily: 'var(--font-heading)' }}>
                 Appointment Confirmed!
               </h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-                Your booking is confirmed. Your stylist is preparing for your visit.
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.92rem', maxWidth: '440px', margin: '0 auto 1.5rem', lineHeight: '1.5' }}>
+                Your booking template has been prepared. WhatsApp will open with your details pre-filled — simply tap <strong>Send</strong> to notify Azora Salon!
               </p>
 
-              {shareStatus === 'sharing' && (
-                <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                  Preparing receipt screenshot…
-                </p>
-              )}
-              {shareStatus === 'shared-download' && (
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem', maxWidth: '420px', marginInline: 'auto' }}>
-                  Receipt downloaded. WhatsApp is open — attach the image before sending.
-                </p>
-              )}
-              {shareStatus === 'shared-native' && (
-                <p style={{ color: '#4caf50', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                  Receipt shared successfully.
-                </p>
-              )}
-              {shareStatus === 'error' && (
-                <p style={{ color: '#ff4d4d', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                  Could not share automatically. Use the button below to try again.
-                </p>
-              )}
-
-              {/* Receipt Styling */}
+              {/* Template UI Card */}
               <div
                 ref={receiptRef}
                 className="booking-receipt-card"
+                style={{
+                  border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                  borderRadius: '12px',
+                  background: 'var(--color-surface)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+                  padding: '1.75rem',
+                  maxWidth: '460px',
+                  margin: '0 auto'
+                }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
                   <div>
-                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>APPOINTMENT NO</span>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: '600', fontFamily: 'var(--font-body)', marginTop: '0.1rem' }}>{bookingNo}</h4>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.08em', fontWeight: '600' }}>APPOINTMENT NO</span>
+                    <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-primary)', margin: '0.15rem 0 0', letterSpacing: '0.04em' }}>{bookingNo}</h4>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>STATUS</span>
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#4caf50', fontFamily: 'var(--font-body)', marginTop: '0.1rem' }}>CONFIRMED</h4>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.08em', 
+                      fontWeight: '700',
+                      padding: '0.3rem 0.75rem',
+                      borderRadius: '99px',
+                      background: 'rgba(76, 175, 80, 0.12)',
+                      border: '1px solid rgba(76, 175, 80, 0.35)',
+                      color: '#4caf50',
+                      display: 'inline-block'
+                    }}>
+                      CONFIRMED
+                    </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.92rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Client:</span>
-                    <span style={{ fontWeight: '500' }}>{formData.name}</span>
+                    <span style={{ fontWeight: '600', color: 'var(--color-text-bright)' }}>{formData.name}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span style={{ color: 'var(--color-text-muted)' }}>Phone:</span>
+                    <span style={{ fontWeight: '500' }}>{formData.phone}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Services:</span>
-                    <span style={{ fontWeight: '500', textAlign: 'right', maxWidth: '70%' }}>
+                    <span style={{ fontWeight: '600', textAlign: 'right', maxWidth: '68%', color: 'var(--color-primary)' }}>
                       {selectedServices.map(s => s.name).join(', ')}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Stylist:</span>
-                    <span style={{ fontWeight: '500' }}>{selectedStylist?.name}</span>
+                    <span style={{ fontWeight: '500' }}>{selectedStylist?.name || 'Preeti'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Date:</span>
-                    <span style={{ fontWeight: '500' }}>{formData.date}</span>
+                    <span style={{ fontWeight: '600' }}>{formData.date}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                     <span style={{ color: 'var(--color-text-muted)' }}>Time Slot:</span>
-                    <span style={{ fontWeight: '500' }}>{formData.timeSlot}</span>
+                    <span style={{ fontWeight: '600', color: 'var(--color-primary)' }}>{formData.timeSlot}</span>
                   </div>
+                  {formData.notes?.trim() && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderTop: '1px dashed var(--color-border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.84rem' }}>Notes:</span>
+                      <span style={{ fontWeight: '400', fontSize: '0.84rem', textAlign: 'right', maxWidth: '70%', color: 'var(--color-text-muted)' }}>
+                        {formData.notes}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '2rem' }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleShareReceipt}
-                  disabled={shareStatus === 'sharing'}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                  {shareStatus === 'shared-download' ? (
-                    <>
-                      <Download size={18} /> Download & Open WhatsApp Again
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle size={18} /> Share Receipt on WhatsApp
-                    </>
-                  )}
-                </button>
-                <button className="btn btn-secondary" onClick={onClose}>
-                  Done & Close
-                </button>
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', alignItems: 'center', marginTop: '1.75rem' }}>
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{ 
+                      backgroundColor: '#25D366', 
+                      borderColor: '#25D366', 
+                      color: '#ffffff', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '0.55rem', 
+                      minWidth: '260px', 
+                      justifyContent: 'center',
+                      fontWeight: '600',
+                      fontSize: '0.98rem',
+                      boxShadow: '0 4px 16px rgba(37, 211, 102, 0.35)'
+                    }}
+                  >
+                    <MessageCircle size={19} /> Send Details via WhatsApp
+                  </a>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleDownloadReceipt}
+                    disabled={downloadingReceipt}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', minWidth: '170px', justifyContent: 'center', fontSize: '0.9rem' }}
+                  >
+                    <Download size={16} /> {downloadingReceipt ? 'Saving…' : 'Download Slip'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={onClose}
+                    style={{ minWidth: '130px', justifyContent: 'center', fontSize: '0.9rem' }}
+                  >
+                    Done &amp; Close
+                  </button>
+                </div>
               </div>
             </div>
           )}

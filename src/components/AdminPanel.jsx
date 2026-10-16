@@ -38,6 +38,45 @@ import UiSelect from './UiSelect';
 
 const ADMIN_SESSION_KEY = 'azora_admin_auth';
 
+export const ADMIN_NAV_ITEMS = [
+  {
+    id: 'billing',
+    title: 'Billing',
+    badge: 'Invoices',
+    desc: 'Create customer bills, compute totals & share receipts on WhatsApp',
+    icon: Receipt,
+  },
+  {
+    id: 'records',
+    title: 'Sheet Records',
+    badge: 'Live Data',
+    desc: 'Explore real-time bookings, client contacts, bills, feedback & offers',
+    icon: Database,
+  },
+  {
+    id: 'gallery',
+    title: 'Gallery',
+    badge: 'Media Library',
+    desc: 'Manage salon portfolio photos hosted securely on Google Drive',
+    icon: Images,
+  },
+  {
+    id: 'offers',
+    title: 'Offers & Packages',
+    badge: 'Promotions',
+    desc: 'Seasonal flyers, bookable combos & Google Sheets sync',
+    icon: Sparkles,
+  },
+];
+
+function getInitialAdminView() {
+  const hash = window.location.hash || '';
+  if (hash.includes('/records')) return 'records';
+  if (hash.includes('/gallery')) return 'gallery';
+  if (hash.includes('/offers')) return 'offers';
+  return 'billing';
+}
+
 function getAdminPin() {
   return import.meta.env.VITE_ADMIN_PIN || 'azora2024';
 }
@@ -212,37 +251,61 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
   const [statusMessage, setStatusMessage] = useState('');
   const [isGeneratingBill, setIsGeneratingBill] = useState(false);
   const [formError, setFormError] = useState('');
-  const [adminView, setAdminView] = useState('billing');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [adminView, setAdminView] = useState(getInitialAdminView);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const billRef = useRef(null);
 
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  const handleAdminViewChange = (view) => {
+  const handleAdminViewChange = useCallback((view) => {
     setAdminView(view);
+    window.location.hash = `admin/${view}`;
+    setIsMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
-    closeMobileMenu();
-  };
+  }, []);
 
+  // Sync adminView from URL hash
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const handleHash = () => {
+      const nextView = getInitialAdminView();
+      setAdminView(nextView);
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // Update hash if user is on base #admin
+  useEffect(() => {
+    if (!window.location.hash || window.location.hash === '#admin') {
+      window.history.replaceState(null, '', `#admin/${adminView}`);
+    }
   }, [adminView]);
 
+  // Close drawer on Escape key
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsMobileMenuOpen(false);
-      }
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen]);
+
+  // Prevent background scroll when drawer is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
 
   const handleLogout = () => {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
     setIsAuthenticated(false);
-    closeMobileMenu();
+    setIsMenuOpen(false);
     onExit();
   };
 
@@ -458,115 +521,138 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
     discount
   );
 
+  const activeNav = ADMIN_NAV_ITEMS.find((item) => item.id === adminView) || ADMIN_NAV_ITEMS[0];
+  const ActiveIcon = activeNav.icon;
+
   return (
     <div className="admin-panel">
-      <header className="admin-header">
-        <div className="admin-header-mobile-bar">
-          <div className="admin-header-brand">
-            <Logo variant="admin" alt="Azora Admin" />
-          </div>
-          <button
-            type="button"
-            className="admin-menu-toggle"
-            onClick={() => setIsMobileMenuOpen((open) => !open)}
-            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-
-        <div className={`admin-mobile-menu${isMobileMenuOpen ? ' open' : ''}`}>
-          <button
-            type="button"
-            className={`admin-mobile-menu-item${adminView === 'billing' ? ' active' : ''}`}
-            onClick={() => handleAdminViewChange('billing')}
-          >
-            <Receipt size={18} /> Billing
-          </button>
-          <button
-            type="button"
-            className={`admin-mobile-menu-item${adminView === 'records' ? ' active' : ''}`}
-            onClick={() => handleAdminViewChange('records')}
-          >
-            <Database size={18} /> Sheet Records
-          </button>
-          <button
-            type="button"
-            className={`admin-mobile-menu-item${adminView === 'gallery' ? ' active' : ''}`}
-            onClick={() => handleAdminViewChange('gallery')}
-          >
-            <Images size={18} /> Gallery
-          </button>
-          <button
-            type="button"
-            className={`admin-mobile-menu-item${adminView === 'offers' ? ' active' : ''}`}
-            onClick={() => handleAdminViewChange('offers')}
-          >
-            <Sparkles size={18} /> Offers & Packages
-          </button>
-          <button
-            type="button"
-            className="admin-mobile-menu-item"
-            onClick={() => {
-              toggleTheme();
-              closeMobileMenu();
-            }}
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
-          <button type="button" className="admin-mobile-menu-item admin-mobile-menu-logout" onClick={handleLogout}>
-            <LogOut size={18} /> Logout
-          </button>
-        </div>
-
-        <div className="admin-header-desktop">
+      {/* Top Navigation Bar with Toggle Button */}
+      <header className="admin-header glass-panel">
+        <div className="admin-header-inner">
           <div className="admin-header-left">
-            <div className="admin-header-brand">
+            {/* The Toggle Button to open the menu drawer */}
+            <button
+              type="button"
+              className="admin-menu-toggle-btn"
+              onClick={() => setIsMenuOpen(true)}
+              aria-label="Open navigation menu"
+              title="Open Navigation Menu"
+            >
+              <Menu size={20} />
+              <span className="admin-menu-toggle-text">Menu</span>
+            </button>
+
+            <div
+              className="admin-header-brand"
+              onClick={() => handleAdminViewChange('billing')}
+              style={{ cursor: 'pointer' }}
+              title="Azora Admin Home"
+            >
               <Logo variant="admin" alt="Azora Admin" />
             </div>
-            <nav className="admin-nav-tabs" aria-label="Admin sections">
-              <button
-                type="button"
-                className={`admin-nav-tab${adminView === 'billing' ? ' active' : ''}`}
-                onClick={() => handleAdminViewChange('billing')}
-              >
-                <Receipt size={16} /> Billing
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-tab${adminView === 'records' ? ' active' : ''}`}
-                onClick={() => handleAdminViewChange('records')}
-              >
-                <Database size={16} /> Sheet Records
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-tab${adminView === 'gallery' ? ' active' : ''}`}
-                onClick={() => handleAdminViewChange('gallery')}
-              >
-                <Images size={16} /> Gallery
-              </button>
-              <button
-                type="button"
-                className={`admin-nav-tab${adminView === 'offers' ? ' active' : ''}`}
-                onClick={() => handleAdminViewChange('offers')}
-              >
-                <Sparkles size={16} /> Offers & Packages
-              </button>
-            </nav>
+
+            {/* Current Active Screen Badge */}
+            <div className="admin-header-current-badge">
+              <span className="admin-badge-indicator" />
+              <ActiveIcon size={14} className="text-gold" />
+              <span className="admin-badge-label">{activeNav.title}</span>
+            </div>
           </div>
+
           <div className="admin-header-actions">
-            <button type="button" className="admin-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+            <button
+              type="button"
+              className="admin-theme-btn"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button type="button" className="btn btn-secondary admin-logout-btn" onClick={handleLogout}>
-              <LogOut size={16} /> Logout
+            <button
+              type="button"
+              className="btn btn-secondary admin-logout-btn"
+              onClick={handleLogout}
+              title="Sign out of Admin"
+            >
+              <LogOut size={16} /> <span className="admin-logout-btn-text">Logout</span>
             </button>
           </div>
         </div>
       </header>
+
+      {/* Slide-out Menu Drawer Backdrop Overlay */}
+      <div
+        className={`admin-drawer-overlay ${isMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMenuOpen(false)}
+        aria-hidden={!isMenuOpen}
+      />
+
+      {/* Slide-out Navigation Drawer */}
+      <aside className={`admin-drawer ${isMenuOpen ? 'open' : ''}`} aria-label="Admin Navigation Menu">
+        <div className="admin-drawer-header">
+          <div className="admin-drawer-brand">
+            <Logo variant="admin" alt="Azora Salon" />
+            <span className="admin-drawer-portal-tag">ADMIN PORTAL</span>
+          </div>
+          <button
+            type="button"
+            className="admin-drawer-close"
+            onClick={() => setIsMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <p className="admin-drawer-hint">Select a workspace module to manage:</p>
+
+        <nav className="admin-drawer-nav">
+          {ADMIN_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = adminView === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`admin-drawer-card ${isActive ? 'active' : ''}`}
+                onClick={() => handleAdminViewChange(item.id)}
+              >
+                <div className="admin-drawer-card-icon">
+                  <Icon size={20} />
+                </div>
+                <div className="admin-drawer-card-body">
+                  <div className="admin-drawer-card-top">
+                    <span className="admin-drawer-card-title">{item.title}</span>
+                    <span className="admin-drawer-card-badge">{item.badge}</span>
+                  </div>
+                  <p className="admin-drawer-card-desc">{item.desc}</p>
+                </div>
+                {isActive && <span className="admin-drawer-active-pill">ACTIVE</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="admin-drawer-footer">
+          <button
+            type="button"
+            className="admin-drawer-footer-action"
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
+          </button>
+          <button
+            type="button"
+            className="admin-drawer-footer-action admin-drawer-footer-logout"
+            onClick={handleLogout}
+          >
+            <LogOut size={17} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
       <main className="admin-main container">
         {adminView === 'records' ? (

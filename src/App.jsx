@@ -12,7 +12,7 @@ import Celebration from './components/Celebration';
 import ScrollToFooter from './components/ScrollToFooter';
 
 function getInitialPage() {
-  return window.location.hash === '#admin' ? 'admin' : 'home';
+  return window.location.hash.startsWith('#admin') ? 'admin' : 'home';
 }
 
 export default function App() {
@@ -51,8 +51,10 @@ export default function App() {
 
   useEffect(() => {
     const syncHash = () => {
-      if (window.location.hash === '#admin') {
+      if (window.location.hash.startsWith('#admin')) {
         setActivePage('admin');
+      } else if (!window.location.hash) {
+        setActivePage('home');
       }
     };
     window.addEventListener('hashchange', syncHash);
@@ -62,8 +64,10 @@ export default function App() {
   const navigateTo = (page) => {
     setActivePage(page);
     if (page === 'admin') {
-      window.location.hash = 'admin';
-    } else if (window.location.hash === '#admin') {
+      if (!window.location.hash.startsWith('#admin')) {
+        window.location.hash = 'admin';
+      }
+    } else if (window.location.hash.startsWith('#admin')) {
       window.history.replaceState(null, '', window.location.pathname);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
