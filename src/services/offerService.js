@@ -235,7 +235,7 @@ export function getOfferCombosAsServices() {
   if (!config.isActive || !Array.isArray(config.combos)) return [];
   return config.combos.map((combo) => ({
     id: combo.id,
-    name: `${combo.name} (${combo.price})`,
+    name: combo.name,
     rawName: combo.name,
     price: combo.numericPrice || 0,
     displayPrice: combo.price,

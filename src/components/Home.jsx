@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Star, ShieldCheck, Award, Sparkles, MapPin, Phone, MessageCircle, ArrowRight } from 'lucide-react';
+
 import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetService';
 import ScrollDownButton from './ScrollDownButton';
 import Logo from './Logo';
@@ -228,9 +230,13 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               <button className="btn btn-primary" onClick={onOpenBooking}>
                 Book Appointment
               </button>
-              <button className="btn btn-secondary" onClick={() => { setActivePage('services'); window.scrollTo({top: 0, behavior: 'smooth'}); }}>
+              <Link 
+                to="/services" 
+                className="btn btn-secondary" 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
                 Explore Services
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -336,8 +342,9 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
           </div>
 
           <div style={{ textAlign: 'center' }}>
-            <span 
-              onClick={() => { setActivePage('services'); window.scrollTo({top: 0, behavior: 'smooth'}); }}
+            <Link 
+              to="/services"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               style={{
                 color: 'var(--color-primary)',
                 fontWeight: '500',
@@ -352,7 +359,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               className="view-all-link"
             >
               View Full Service Menu <ArrowRight size={16} />
-            </span>
+            </Link>
           </div>
         </div>
       </section>

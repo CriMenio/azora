@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { NavLink, Link, useLocation } from 'react-router-dom';
+import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
 import Logo from './Logo';
 
-export default function Header({ activePage, setActivePage, onOpenBooking, theme, toggleTheme }) {
+export default function Header({ onOpenBooking, theme, toggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,19 +20,19 @@ export default function Header({ activePage, setActivePage, onOpenBooking, theme
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'services', label: 'Services' },
-    { id: 'gallery', label: 'Gallery' },
-    { id: 'about', label: 'About Us' },
-    { id: 'contact', label: 'Contact' },
-  ];
-
-  const handleNavClick = (pageId) => {
-    setActivePage(pageId);
+  // Close mobile menu on route change
+  useEffect(() => {
     setIsOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [location.pathname]);
+
+  const navLinks = [
+    { path: '/', label: 'Home', end: true },
+    { path: '/services', label: 'Services' },
+    { path: '/offers', label: 'Offers', badge: 'Special' },
+    { path: '/gallery', label: 'Gallery' },
+    { path: '/about', label: 'About Us' },
+    { path: '/contact', label: 'Contact' },
+  ];
 
   return (
     <header 
@@ -43,21 +45,37 @@ export default function Header({ activePage, setActivePage, onOpenBooking, theme
     >
       <div className="container header-container">
         {/* Logo */}
-        <a href="#home" className="logo" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>
+        <Link 
+          to="/" 
+          className="logo" 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Azora Salon & Spa Home"
+        >
           <Logo variant="header" />
-        </a>
+        </Link>
 
         {/* Navigation Menu */}
-        <nav>
+        <nav aria-label="Main Navigation">
           <ul className={`nav-menu ${isOpen ? 'open' : ''}`}>
             {navLinks.map((link) => (
-              <li key={link.id}>
-                <span 
-                  className={`nav-link ${activePage === link.id ? 'active' : ''}`}
-                  onClick={() => handleNavClick(link.id)}
+              <li key={link.path}>
+                <NavLink 
+                  to={link.path}
+                  end={link.end}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setIsOpen(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                 >
                   {link.label}
-                </span>
+                  {link.badge && (
+                    <span className="nav-offer-pill">
+                      <Sparkles size={11} style={{ marginRight: '2px' }} />
+                      {link.badge}
+                    </span>
+                  )}
+                </NavLink>
               </li>
             ))}
             {/* Mobile Only CTA */}
@@ -122,3 +140,4 @@ export default function Header({ activePage, setActivePage, onOpenBooking, theme
     </header>
   );
 }
+

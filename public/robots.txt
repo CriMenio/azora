@@ -1,0 +1,14 @@
+# Robots.txt for Azora Salon & Spa
+User-agent: *
+Allow: /
+Allow: /services
+Allow: /offers
+Allow: /gallery
+Allow: /about
+Allow: /contact
+
+# Disallow Private Admin Portal
+Disallow: /admin
+
+# Sitemap Location
+Sitemap: https://azorasalon.com/sitemap.xml

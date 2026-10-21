@@ -873,7 +873,7 @@ select.form-control option {
 
 .service-dropdown-panel {
   margin-top: 0.5rem;
-  max-height: 220px;
+  max-height: 320px;
   overflow-y: auto;
   padding: 1.25rem;
   background-color: var(--color-surface);
@@ -896,6 +896,318 @@ select.form-control option {
   color: var(--color-primary);
   border: 1px solid rgba(212, 175, 55, 0.45);
   vertical-align: middle;
+}
+
+/* ==========================================
+   Organized Services Menu Screen
+   ========================================== */
+
+.services-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.services-search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.services-search-input {
+  width: 100%;
+  padding: 0.75rem 2.8rem 0.75rem 2.8rem;
+  border-radius: 99px;
+  background-color: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-bright);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  font-family: inherit;
+}
+
+.services-search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.services-search-icon {
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
+.services-search-clear {
+  position: absolute;
+  right: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition-fast);
+}
+
+.services-search-clear:hover {
+  color: var(--color-primary);
+  background-color: rgba(212, 175, 55, 0.1);
+}
+
+.services-category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.services-cat-tab {
+  padding: 0.45rem 1rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 99px;
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  transition: var(--transition-fast);
+  font-family: inherit;
+}
+
+.services-cat-tab:hover {
+  color: var(--color-text-bright);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.services-cat-tab.active {
+  background-color: var(--color-primary);
+  color: var(--color-text-dark);
+  border-color: var(--color-primary);
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.25);
+  font-weight: 600;
+}
+
+.services-cat-tab-badge {
+  font-size: 0.68rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.services-cat-tab.active .services-cat-tab-badge {
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--color-text-dark);
+}
+
+.services-notice-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px dashed var(--color-gold-border);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* Seamless Multi-Column Masonry (Zero Empty Gaps between cards) */
+.services-sections-masonry {
+  column-count: 3;
+  column-gap: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+  .services-sections-masonry {
+    column-count: 2;
+    column-gap: 1.15rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .services-sections-masonry {
+    column-count: 1;
+    column-gap: 0;
+  }
+}
+
+.salon-section-card {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 1.25rem;
+  display: inline-block;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  overflow: hidden;
+  transition: var(--transition-fast);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+  vertical-align: top;
+}
+
+.salon-section-card:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.salon-section-header {
+  padding: 0.75rem 1rem;
+  background: rgba(212, 175, 55, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.salon-section-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.salon-section-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.salon-section-badge {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: rgba(212, 175, 55, 0.12);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.salon-section-count {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.salon-section-title {
+  font-size: 1.05rem;
+  font-family: var(--font-heading);
+  color: var(--color-text-bright);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.salon-section-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.salon-section-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.salon-menu-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.95rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: var(--transition-fast);
+}
+
+[data-theme="light"] .salon-menu-item-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.salon-menu-item-row:last-child {
+  border-bottom: none;
+}
+
+.salon-menu-item-row:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.salon-menu-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.salon-menu-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.salon-menu-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-bright);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.salon-menu-item-desc {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+  margin: 0.12rem 0 0 0;
+}
+
+.salon-menu-book-btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  background: transparent;
+  border: 1px solid var(--color-gold-border);
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.salon-menu-book-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-text-dark);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(212, 175, 55, 0.2);
 }
 
 .booking-receipt-card {
@@ -6006,6 +6318,444 @@ select.form-control option {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Customer Offers Navigation Pill & Dedicated Offers Page
+   ========================================================================== */
+.nav-offer-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(212, 175, 55, 0.18);
+  color: var(--color-primary);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+  vertical-align: middle;
+  animation: offer-pulse 2.8s infinite;
+}
+
+@keyframes offer-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.45);
+  }
+}
+
+/* Offers Page Layout */
+.azora-offers-page {
+  min-height: 100vh;
+}
+
+.azora-offers-hero {
+  padding: 4.5rem 0 2.5rem;
+  background: radial-gradient(ellipse at top, rgba(212, 175, 55, 0.1) 0%, transparent 65%);
+}
+
+.azora-offers-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid var(--color-gold-border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  margin-bottom: 1.25rem;
+}
+
+.azora-offers-hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 600;
+  color: var(--color-text-bright);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.azora-offers-hero-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+  color: var(--color-text-muted);
+}
+
+.azora-offers-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Curated Signature Packages (When Seasonal Offers are Inactive) */
+.azora-curated-packages-section {
+  padding: 1rem 0 3.5rem;
+}
+
+.azora-curated-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+}
+
+.azora-curated-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.75rem;
+  margin-bottom: 3rem;
+}
+
+.azora-curated-card {
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.azora-curated-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.azora-curated-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-gold-border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.azora-curated-card:hover::before {
+  opacity: 1;
+}
+
+.azora-curated-badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.azora-curated-category {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.azora-curated-tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  background: var(--color-primary);
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+}
+
+.azora-curated-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  color: var(--color-text-bright);
+  margin: 0 0 0.65rem;
+  line-height: 1.3;
+}
+
+.azora-curated-desc {
+  font-size: 0.86rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+.azora-curated-items {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px dashed var(--color-border);
+  border-bottom: 1px dashed var(--color-border);
+  padding: 1rem 0;
+}
+
+.azora-curated-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.azora-curated-item-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.azora-curated-footer {
+  margin-top: auto;
+}
+
+/* VIP Alert Banner */
+.azora-vip-banner {
+  border-radius: 16px;
+  border: 1px solid var(--color-gold-border);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(20, 18, 16, 0.7) 100%);
+  padding: 2.25rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  margin-bottom: 1.5rem;
+}
+
+.azora-vip-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.azora-vip-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.azora-vip-text h3 {
+  font-size: 1.25rem;
+  font-family: var(--font-heading);
+  color: var(--color-text-bright);
+  margin: 0 0 0.35rem;
+}
+
+.azora-vip-text p {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 620px;
+}
+
+.azora-vip-actions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .azora-vip-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
+  }
+  .azora-vip-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  .azora-vip-actions {
+    width: 100%;
+  }
+  .azora-vip-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Perks Grid */
+.azora-offers-perks-section {
+  padding: 4rem 0;
+}
+
+.azora-offers-perks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.azora-offers-perk-card {
+  padding: 2.2rem 1.6rem;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.azora-offers-perk-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--color-gold-border);
+  box-shadow: var(--shadow-glow);
+}
+
+.azora-offers-perk-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--color-primary);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  transition: var(--transition-fast);
+}
+
+.azora-offers-perk-card:hover .azora-offers-perk-icon {
+  background: var(--color-primary);
+  color: #12100e;
+  transform: scale(1.1);
+}
+
+.azora-offers-perk-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  color: var(--color-text-bright);
+}
+
+.azora-offers-perk-card p {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* How to Redeem Steps */
+.azora-offers-steps-section {
+  margin: 2rem auto 4rem;
+}
+
+.azora-offers-steps-card {
+  padding: 3.5rem 2.5rem;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.azora-offers-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+}
+
+.azora-step-box {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.azora-step-num {
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.azora-step-box h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-bright);
+}
+
+.azora-step-box p {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Bottom CTA Banner */
+.azora-offers-cta-banner {
+  margin-bottom: 5rem;
+}
+
+.azora-offers-cta-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2.75rem 3rem;
+  border-radius: 20px;
+  border: 1px solid var(--color-gold-border);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.09) 0%, rgba(20, 18, 16, 0.6) 100%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.azora-offers-cta-box h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text-bright);
+  margin-bottom: 0.4rem;
+}
+
+.azora-offers-cta-box p {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.azora-offers-cta-actions {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+  .azora-offers-cta-box {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
+  .azora-offers-cta-actions {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
 
 
 

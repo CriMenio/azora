@@ -52,6 +52,8 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
   const [step, setStep] = useState(initialStep);
   const [bookingNo, setBookingNo] = useState('');
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
+  const [serviceSearch, setServiceSearch] = useState('');
+  const dropdownRef = useRef(null);
 
   const allServices = React.useMemo(() => {
     const base = getBookingServices();
@@ -97,7 +99,22 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
     }
     setErrors({});
     setWhatsappUrl('');
+    setServiceSearch('');
   }, [initialServiceId, initialStep, isOpen]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsServiceDropdownOpen(false);
+      }
+    };
+    if (isServiceDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isServiceDropdownOpen]);
 
   const handleDownloadReceipt = async () => {
     if (!receiptRef.current || !bookingNo) return;
@@ -287,8 +304,31 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                 <Scissors size={18} className="text-gold" style={{ color: 'var(--color-primary)' }} /> Select Service & Stylist
               </h3>
               
-              <div className="form-group">
-                <label className="form-label">Select Services (Multiple Selection)</label>
+              <div className="form-group" ref={dropdownRef}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Select Services (Multiple Selection)</label>
+                  {formData.serviceIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({ ...prev, serviceIds: [] }));
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--color-primary)',
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      Clear Selection ({formData.serviceIds.length})
+                    </button>
+                  )}
+                </div>
                 
                 {/* Custom Dropdown Trigger */}
                 <div 
@@ -315,7 +355,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                   }}>
                     {formData.serviceIds.length === 0 
                       ? '-- Choose Services --' 
-                      : formData.serviceIds.map(id => allServices.find(s => s.id === id)?.name).filter(Boolean).join(', ')
+                      : `${formData.serviceIds.length} Selected: ` + formData.serviceIds.map(id => allServices.find(s => s.id === id)?.name).filter(Boolean).join(', ')
                     }
                   </span>
                   <span style={{ 
@@ -332,9 +372,37 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                 {isServiceDropdownOpen && (
                   <div 
                     className="service-dropdown-panel"
+                    onClick={(e) => e.stopPropagation()}
                   >
+                    {/* Search box inside dropdown */}
+                    <div style={{ position: 'sticky', top: '-1.25rem', zIndex: 3, backgroundColor: 'var(--color-surface)', paddingTop: '0.25rem', paddingBottom: '0.75rem', marginBottom: '0.75rem', borderBottom: '1px solid var(--color-border)', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        type="text"
+                        placeholder="Search services (e.g. hair, facial, wax)..."
+                        value={serviceSearch}
+                        onChange={(e) => setServiceSearch(e.target.value)}
+                        className="form-control"
+                        style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem', height: '36px', flex: 1 }}
+                        autoFocus
+                      />
+                      {serviceSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setServiceSearch('')}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '0 0.35rem', fontSize: '0.9rem' }}
+                          title="Clear search"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
                     {BOOKING_CATEGORIES.map(({ key, label }) => {
-                      const catServices = allServices.filter(s => s.bookingCategory === key);
+                      const catServices = allServices.filter(s => {
+                        if (s.bookingCategory !== key) return false;
+                        if (!serviceSearch.trim()) return true;
+                        return s.name.toLowerCase().includes(serviceSearch.trim().toLowerCase());
+                      });
                       if (catServices.length === 0) return null;
 
                       return (
@@ -397,6 +465,12 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                         </div>
                       );
                     })}
+
+                    {serviceSearch.trim() && allServices.filter(s => s.name.toLowerCase().includes(serviceSearch.trim().toLowerCase())).length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                        No services found matching "{serviceSearch}".
+                      </div>
+                    )}
                   </div>
                 )}
                 {errors.serviceIds && <p style={{ color: '#ff4d4d', fontSize: '0.8rem', marginTop: '0.35rem' }}>{errors.serviceIds}</p>}

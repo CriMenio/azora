@@ -1,3 +1,5 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import Logo from './Logo';
 
@@ -21,9 +23,8 @@ const Twitter = ({ size = 18 }) => (
   </svg>
 );
 
-export default function Footer({ setActivePage }) {
-  const handleNavClick = (pageId) => {
-    setActivePage(pageId);
+export default function Footer() {
+  const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -34,7 +35,9 @@ export default function Footer({ setActivePage }) {
           {/* Brand Info */}
           <div className="footer-col">
             <div className="logo footer-logo">
-              <Logo variant="footer" />
+              <Link to="/" onClick={scrollToTop} aria-label="Azora Salon & Spa">
+                <Logo variant="footer" />
+              </Link>
             </div>
             <p style={{ maxWidth: '280px', marginBottom: '1rem' }}>
               A sanctuary of elegance and luxury. Experience premium hair, beauty, and grooming rituals designed to revive your senses and enhance your natural beauty.
@@ -60,12 +63,13 @@ export default function Footer({ setActivePage }) {
           <div className="footer-col">
             <h3>Quick Links</h3>
             <ul className="footer-links">
-              <li><span onClick={() => handleNavClick('home')}>Home</span></li>
-              <li><span onClick={() => handleNavClick('services')}>Services</span></li>
-              <li><span onClick={() => handleNavClick('gallery')}>Gallery</span></li>
-              <li><span onClick={() => handleNavClick('about')}>About Us</span></li>
-              <li><span onClick={() => handleNavClick('contact')}>Contact</span></li>
-              <li><span onClick={() => handleNavClick('admin')}>Admin</span></li>
+              <li><Link to="/" onClick={scrollToTop}>Home</Link></li>
+              <li><Link to="/services" onClick={scrollToTop}>Services</Link></li>
+              <li><Link to="/offers" onClick={scrollToTop}>Special Offers</Link></li>
+              <li><Link to="/gallery" onClick={scrollToTop}>Gallery</Link></li>
+              <li><Link to="/about" onClick={scrollToTop}>About Us</Link></li>
+              <li><Link to="/contact" onClick={scrollToTop}>Contact</Link></li>
+              <li><Link to="/admin" onClick={scrollToTop}>Admin</Link></li>
             </ul>
           </div>
 
@@ -99,17 +103,21 @@ export default function Footer({ setActivePage }) {
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Azora Salon & Spa. All rights reserved.</p>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => handleNavClick('about')}>Privacy Policy</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => handleNavClick('contact')}>Terms of Service</span>
+            <Link to="/about" onClick={scrollToTop} style={{ cursor: 'pointer' }}>Privacy Policy</Link>
+            <Link to="/contact" onClick={scrollToTop} style={{ cursor: 'pointer' }}>Terms of Service</Link>
           </div>
         </div>
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `
+        .footer-links a,
         .footer-links span {
           cursor: pointer;
           transition: var(--transition-fast);
+          color: inherit;
+          display: inline-block;
         }
+        .footer-links a:hover,
         .footer-links span:hover {
           color: var(--color-primary);
           padding-left: 5px;
@@ -118,3 +126,4 @@ export default function Footer({ setActivePage }) {
     </footer>
   );
 }
+
