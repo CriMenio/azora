@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const SITE_URL = 'https://azorasalon.com'; // Change to production domain if different
+const SITE_URL = typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost') 
+  ? window.location.origin 
+  : 'https://azorasalon.in';
 
 export default function SeoMeta({
   title = 'Azora Salon & Spa | Premium Hair, Beauty & Grooming in Kamothe, Navi Mumbai',

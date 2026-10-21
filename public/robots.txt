@@ -11,4 +11,4 @@ Allow: /contact
 Disallow: /admin
 
 # Sitemap Location
-Sitemap: https://azorasalon.com/sitemap.xml
+Sitemap: https://azorasalon.in/sitemap.xml
