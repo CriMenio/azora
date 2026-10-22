@@ -182,7 +182,7 @@ export default function AdminRecords({ adminPin }) {
               label: 'Rating',
               render: (r) => (
                 <span className="admin-records-stars">
-                  {Array.from({ length: r.stars || 5 }).map((_, i) => (
+                  {Array.from({ length: Math.max(1, Math.min(5, Math.round(Number(r.stars) || 5))) }).map((_, i) => (
                     <Star key={i} size={12} fill="currentColor" />
                   ))}
                 </span>
@@ -218,7 +218,7 @@ export default function AdminRecords({ adminPin }) {
               label: 'Rating',
               render: (r) => (
                 <span className="admin-records-stars">
-                  {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                  {Array.from({ length: Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5))) }).map((_, i) => (
                     <Star key={i} size={12} fill="currentColor" />
                   ))}
                 </span>

@@ -115,7 +115,7 @@ export default function AdminDashboard({ adminPin, onNavigate }) {
     // Unique phone numbers across sources
     const uniquePhones = new Set();
     customers.forEach((c) => {
-      if (c.phone) uniquePhones.add(c.phone.replace(/\D/g, ''));
+      if (c.phone) uniquePhones.add(String(c.phone).replace(/\D/g, ''));
     });
     sheetCustomers.forEach((c) => {
       if (c.phone) uniquePhones.add(String(c.phone).replace(/\D/g, ''));
@@ -471,8 +471,9 @@ export default function AdminDashboard({ adminPin, onNavigate }) {
               <p className="admin-dash-empty">No billing invoices generated yet.</p>
             ) : (
               billingStats.recentBills.map((b, idx) => {
-                const phoneClean = (b.clientPhone || b.phone || '').replace(/\D/g, '');
+                const phoneClean = String(b.clientPhone || b.phone || '').replace(/\D/g, '');
                 const waPhone = phoneClean.length === 10 ? `91${phoneClean}` : phoneClean;
+                const displayPhone = String(b.clientPhone || b.phone || '');
 
                 return (
                   <div key={b.billNo || idx} className="admin-dash-bill-item">
@@ -482,7 +483,7 @@ export default function AdminDashboard({ adminPin, onNavigate }) {
                         <h4 className="dash-bill-client">{b.clientName}</h4>
                         <div className="dash-bill-meta">
                           <span>{b.serviceDate}</span>
-                          {b.clientPhone && <span>• {b.clientPhone}</span>}
+                          {displayPhone && <span>• {displayPhone}</span>}
                         </div>
                       </div>
                     </div>
@@ -550,7 +551,7 @@ export default function AdminDashboard({ adminPin, onNavigate }) {
                       )}
                     </div>
                     <div className="dash-rev-stars">
-                      {[...Array(rev.rating || 5)].map((_, i) => (
+                      {[...Array(Math.max(1, Math.min(5, Math.round(Number(rev.rating) || 5))))].map((_, i) => (
                         <Star key={i} size={13} fill="currentColor" className="text-gold" />
                       ))}
                     </div>

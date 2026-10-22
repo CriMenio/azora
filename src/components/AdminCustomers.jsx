@@ -449,7 +449,7 @@ export default function AdminCustomers({ adminPin }) {
       ) : (
         <div className="admin-customers-grid">
           {filteredList.map((client) => {
-            const cleanPhone = (client.phone || '').replace(/[^0-9]/g, '');
+            const cleanPhone = String(client.phone || '').replace(/[^0-9]/g, '');
             const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
             const waMsg = encodeURIComponent(`Hi ${client.fullName}, thank you for choosing Azora Salon & Spa! We hope you loved your ${client.service || 'service'}.`);
 
@@ -471,7 +471,7 @@ export default function AdminCustomers({ adminPin }) {
                       <div className="admin-cust-contact-chips">
                         {client.phone && (
                           <span className="admin-cust-chip">
-                            <Phone size={12} /> {client.phone}
+                            <Phone size={12} /> {String(client.phone)}
                           </span>
                         )}
                         {client.address && (
@@ -532,7 +532,7 @@ export default function AdminCustomers({ adminPin }) {
                 <div className="admin-cust-feedback-box">
                   <div className="admin-cust-stars-row">
                     <div className="stars-wrap">
-                      {[...Array(client.rating || 5)].map((_, idx) => (
+                      {[...Array(Math.max(1, Math.min(5, Math.round(Number(client.rating) || 5))))].map((_, idx) => (
                         <Star key={idx} size={14} fill="currentColor" className="text-gold" />
                       ))}
                     </div>
@@ -906,7 +906,7 @@ export default function AdminCustomers({ adminPin }) {
                   {viewingCustomer.phone && (
                     <div className="info-card-actions">
                       <a
-                        href={`https://wa.me/${(viewingCustomer.phone || '').replace(/[^0-9]/g, '').length === 10 ? '91' + (viewingCustomer.phone || '').replace(/[^0-9]/g, '') : (viewingCustomer.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${viewingCustomer.fullName}, thank you for choosing Azora Salon & Spa!`)}`}
+                        href={`https://wa.me/${String(viewingCustomer.phone || '').replace(/[^0-9]/g, '').length === 10 ? '91' + String(viewingCustomer.phone || '').replace(/[^0-9]/g, '') : String(viewingCustomer.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${viewingCustomer.fullName}, thank you for choosing Azora Salon & Spa!`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="cust-mini-btn cust-mini-btn--wa"
@@ -950,7 +950,7 @@ export default function AdminCustomers({ adminPin }) {
               <div className="cust-dossier-feedback-section">
                 <div className="dossier-stars-row">
                   <div className="stars-wrap">
-                    {[...Array(viewingCustomer.rating || 5)].map((_, idx) => (
+                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(viewingCustomer.rating) || 5))))].map((_, idx) => (
                       <Star key={idx} size={15} fill="currentColor" className="text-gold" />
                     ))}
                   </div>

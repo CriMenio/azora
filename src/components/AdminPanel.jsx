@@ -20,6 +20,7 @@ import AdminCustomers from './AdminCustomers';
 import AdminRecords from './AdminRecords';
 import AdminGallery from './AdminGallery';
 import AdminOffers from './AdminOffers';
+import ErrorBoundary from './ErrorBoundary';
 import Logo from './Logo';
 
 const ADMIN_SESSION_KEY = 'azora_admin_auth';
@@ -361,21 +362,23 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
 
       {/* Main Admin Content Body */}
       <main className="admin-main container">
-        {adminView === 'dashboard' ? (
-          <AdminDashboard adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
-        ) : adminView === 'billing' ? (
-          <AdminBilling adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
-        ) : adminView === 'customers' ? (
-          <AdminCustomers adminPin={getAdminPin()} />
-        ) : adminView === 'records' ? (
-          <AdminRecords adminPin={getAdminPin()} />
-        ) : adminView === 'gallery' ? (
-          <AdminGallery adminPin={getAdminPin()} />
-        ) : adminView === 'offers' ? (
-          <AdminOffers adminPin={getAdminPin()} />
-        ) : (
-          <AdminBilling adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
-        )}
+        <ErrorBoundary key={adminView}>
+          {adminView === 'dashboard' ? (
+            <AdminDashboard adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
+          ) : adminView === 'billing' ? (
+            <AdminBilling adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
+          ) : adminView === 'customers' ? (
+            <AdminCustomers adminPin={getAdminPin()} />
+          ) : adminView === 'records' ? (
+            <AdminRecords adminPin={getAdminPin()} />
+          ) : adminView === 'gallery' ? (
+            <AdminGallery adminPin={getAdminPin()} />
+          ) : adminView === 'offers' ? (
+            <AdminOffers adminPin={getAdminPin()} />
+          ) : (
+            <AdminBilling adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />
+          )}
+        </ErrorBoundary>
       </main>
     </div>
   );

@@ -82,16 +82,17 @@ function parseServicesString(str, total = 0) {
 
 export function normalizeBill(bill) {
   if (!bill) return null;
-  const billNo = bill.billNo || bill.bill_no || 'AZR-BILL';
-  const clientName = bill.clientName || bill.name || 'Valued Client';
-  const clientPhone = bill.clientPhone || bill.phone || '';
-  const clientEmail = bill.clientEmail || bill.email || '';
-  const serviceDate =
-    bill.serviceDate || bill.date || (bill.createdAt ? bill.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]);
+  const billNo = String(bill.billNo || bill.bill_no || 'AZR-BILL');
+  const clientName = String(bill.clientName || bill.name || 'Valued Client');
+  const clientPhone = String(bill.clientPhone || bill.phone || '');
+  const clientEmail = String(bill.clientEmail || bill.email || '');
+  const serviceDate = String(
+    bill.serviceDate || bill.date || (bill.createdAt ? bill.createdAt.split('T')[0] : new Date().toISOString().split('T')[0])
+  );
   const subtotal = Number(bill.subtotal) || 0;
   const discount = Number(bill.discount) || 0;
   const total = Number(bill.total) || (subtotal > 0 ? subtotal - discount : 0);
-  const notes = bill.notes || '';
+  const notes = String(bill.notes || '');
 
   let lineItems = [];
   if (Array.isArray(bill.lineItems) && bill.lineItems.length > 0) {
@@ -269,12 +270,12 @@ export default function AdminBilling({ adminPin, onNavigate }) {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((b) => {
-        const no = (b.billNo || '').toLowerCase();
-        const name = (b.clientName || '').toLowerCase();
-        const phone = (b.clientPhone || '').toLowerCase();
+        const no = String(b.billNo || '').toLowerCase();
+        const name = String(b.clientName || '').toLowerCase();
+        const phone = String(b.clientPhone || b.phone || '').toLowerCase();
         const services = Array.isArray(b.lineItems)
           ? b.lineItems.map((i) => i.name).join(' ').toLowerCase()
-          : (b.services || '').toLowerCase();
+          : String(b.services || '').toLowerCase();
         return no.includes(q) || name.includes(q) || phone.includes(q) || services.includes(q);
       });
     }
@@ -761,7 +762,7 @@ export default function AdminBilling({ adminPin, onNavigate }) {
                   <tbody>
                     {filteredBills.map((rawBill) => {
                       const bill = normalizeBill(rawBill);
-                      const cleanPhone = (bill.clientPhone || '').replace(/[^0-9]/g, '');
+                      const cleanPhone = String(bill.clientPhone || '').replace(/[^0-9]/g, '');
 
                       return (
                         <tr
