@@ -223,3 +223,62 @@ export async function getTestimonials() {
     return null;
   }
 }
+
+/**
+ * Saves or updates a customer profile in the Customers tab in Google Sheets.
+ */
+export async function saveCustomerToSpreadsheet(customer, adminPin) {
+  const payload = {
+    formType: 'saveCustomer',
+    pin: adminPin,
+    id: customer.id,
+    fullName: customer.fullName,
+    phone: customer.phone,
+    email: customer.email || '',
+    address: customer.address || '',
+    service: customer.service || '',
+    reference: customer.reference || '',
+    visitDate: customer.visitDate || '',
+    rating: customer.rating != null ? customer.rating : 5,
+    feedback: customer.feedback || '',
+    remarks: customer.remarks || '',
+    images: Array.isArray(customer.images) ? customer.images : [],
+  };
+
+  return postToSpreadsheet(payload);
+}
+
+/**
+ * Removes a customer profile row from the Customers tab in Google Sheets.
+ */
+export async function deleteCustomerFromSpreadsheet(customerId, adminPin) {
+  const payload = {
+    formType: 'deleteCustomer',
+    pin: adminPin,
+    id: customerId,
+  };
+
+  return postToSpreadsheet(payload);
+}
+
+/**
+ * Fetches all customer profiles from the Customers sheet.
+ */
+export async function fetchCustomersFromSpreadsheet(adminPin) {
+  const webhookUrl = getWebhookUrl();
+  if (!isWebhookConfigured(webhookUrl)) {
+    return null;
+  }
+
+  try {
+    const url = `${webhookUrl}?action=customers&pin=${encodeURIComponent(adminPin)}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return Array.isArray(data) ? data : null;
+  } catch (error) {
+    console.error('Failed to fetch customers from spreadsheet:', error);
+    return null;
+  }
+}
+

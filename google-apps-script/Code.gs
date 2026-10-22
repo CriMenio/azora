@@ -10,6 +10,7 @@
  * - "Billing" tab — auto-created if missing
  * - "Gallery" tab — auto-created on first image upload
  * - "Offers" tab — auto-created with headers: Timestamp | Site Visibility | Poster Location / URL | Poster Super-Title | Offer Title / Heading | Description | Offer Validity | Tags | Packages with Amount | Packages Raw JSON
+ * - "Customers" (or "Custmers") tab — auto-created with headers: Timestamp | Customer ID | Full Name | Phone | Email | Address | Services Availed | Reference Source | Visit Date | Rating | Feedback / Review | Stylist Remarks | Photos Count | Photo URLs | Updated At
  *
  * GALLERY SETUP:
  * - Images are stored in a Google Drive folder named "Azora Gallery" (auto-created).
@@ -266,6 +267,149 @@ function doPost(e) {
         return createJsonResponse({ status: "error", error: saveErr.toString() });
       }
 
+    } else if (data.formType === "saveCustomer") {
+      // Save or update customer profile in Customers tab
+      if (!isValidAdminPin(String(data.pin || ""))) {
+        return createJsonResponse({ status: "error", error: "Unauthorized" });
+      }
+
+      try {
+        var sheet = getOrCreateCustomersSheet(ss);
+        var customerId = data.id || ("cust-" + Date.now());
+        var imageUrls = [];
+
+        // If customer photos are provided, upload any base64 images to Google Drive
+        if (Array.isArray(data.images) && data.images.length > 0) {
+          var customerFolder = null;
+          for (var imgIdx = 0; imgIdx < data.images.length; imgIdx++) {
+            var imgItem = data.images[imgIdx];
+            if (typeof imgItem === "string" && imgItem.indexOf("data:image") === 0) {
+              try {
+                if (!customerFolder) {
+                  customerFolder = getOrCreateCustomerMakeoverFolder();
+                }
+                var commaIdx = imgItem.indexOf(",");
+                var mimeMatch = imgItem.match(/data:([^;]+);/);
+                var mimeType = (mimeMatch && mimeMatch[1]) ? mimeMatch[1] : "image/jpeg";
+                var base64Content = imgItem.substring(commaIdx + 1);
+                var ext = mimeType.indexOf("png") !== -1 ? ".png" : ".jpg";
+                var fileName = "makeover_" + String(data.fullName || "client").replace(/[^a-zA-Z0-9]/g, "_") + "_" + Date.now() + "_" + (imgIdx + 1) + ext;
+
+                var blob = Utilities.newBlob(Utilities.base64Decode(base64Content), mimeType, fileName);
+                var driveFile = customerFolder.createFile(blob);
+                driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+                var fileId = driveFile.getId();
+                var photoUrl = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w1200";
+                imageUrls.push(photoUrl);
+              } catch (driveErr) {
+                Logger.log("Customer image upload error: " + driveErr);
+              }
+            } else if (typeof imgItem === "string" && imgItem.indexOf("http") === 0) {
+              imageUrls.push(imgItem);
+            }
+          }
+        }
+
+        var photosCount = imageUrls.length || (Array.isArray(data.images) ? data.images.length : 0);
+        var photosString = imageUrls.join("\n");
+
+        var values = sheet.getDataRange().getValues();
+        var existingRowIndex = -1;
+
+        // Search for existing row by ID (column 2) or Phone (column 4)
+        for (var r = 1; r < values.length; r++) {
+          var rowId = String(values[r][1] || "");
+          var rowPhone = String(values[r][3] || "").replace(/\D/g, "");
+          var searchPhone = String(data.phone || "").replace(/\D/g, "");
+
+          if ((data.id && rowId === String(data.id)) || (searchPhone && rowPhone && rowPhone === searchPhone)) {
+            existingRowIndex = r + 1; // 1-indexed row number
+            customerId = rowId || customerId;
+            break;
+          }
+        }
+
+        var rowData = [
+          existingRowIndex !== -1 ? values[existingRowIndex - 1][0] : timestamp.toISOString(),
+          customerId,
+          data.fullName || "",
+          data.phone || "",
+          data.email || "",
+          data.address || "",
+          data.service || "",
+          data.reference || "",
+          data.visitDate || "",
+          data.rating != null ? data.rating : 5,
+          data.feedback || "",
+          data.remarks || "",
+          photosCount,
+          photosString,
+          timestamp.toISOString()
+        ];
+
+        if (existingRowIndex !== -1) {
+          sheet.getRange(existingRowIndex, 1, 1, rowData.length).setValues([rowData]);
+        } else {
+          sheet.appendRow(rowData);
+        }
+
+        return createJsonResponse({
+          status: "success",
+          message: existingRowIndex !== -1 ? "Customer updated in Customers sheet" : "New customer saved to Customers sheet",
+          customer: {
+            id: customerId,
+            fullName: data.fullName || "",
+            phone: data.phone || "",
+            email: data.email || "",
+            address: data.address || "",
+            service: data.service || "",
+            reference: data.reference || "",
+            visitDate: data.visitDate || "",
+            rating: data.rating != null ? data.rating : 5,
+            feedback: data.feedback || "",
+            remarks: data.remarks || "",
+            images: imageUrls.length > 0 ? imageUrls : (Array.isArray(data.images) ? data.images : []),
+            photosCount: photosCount,
+            updatedAt: timestamp.toISOString()
+          }
+        });
+      } catch (custErr) {
+        return createJsonResponse({ status: "error", error: custErr.toString() });
+      }
+
+    } else if (data.formType === "deleteCustomer") {
+      // Remove customer row from Customers tab
+      if (!isValidAdminPin(String(data.pin || ""))) {
+        return createJsonResponse({ status: "error", error: "Unauthorized" });
+      }
+
+      try {
+        var sheet = getOrCreateCustomersSheet(ss);
+        var values = sheet.getDataRange().getValues();
+        var targetId = String(data.id || "").trim();
+        var targetPhone = String(data.phone || "").replace(/\D/g, "");
+        var deleted = false;
+
+        for (var i = values.length - 1; i >= 1; i--) {
+          var rowId = String(values[i][1] || "").trim();
+          var rowPhone = String(values[i][3] || "").replace(/\D/g, "");
+
+          if ((targetId && rowId === targetId) || (targetPhone && rowPhone && rowPhone === targetPhone)) {
+            sheet.deleteRow(i + 1);
+            deleted = true;
+            break;
+          }
+        }
+
+        return createJsonResponse({
+          status: "success",
+          message: deleted ? "Customer removed from Customers sheet" : "Customer record not found in sheet",
+          deleted: deleted
+        });
+      } catch (delErr) {
+        return createJsonResponse({ status: "error", error: delErr.toString() });
+      }
+
     } else {
       return createResponse("error", "Unsupported or missing formType");
     }
@@ -300,6 +444,15 @@ function doGet(e) {
         return createJsonResponse({ error: "Unauthorized" });
       }
       return createJsonResponse(syncGoogleReviews());
+    }
+
+    if (action === "customers") {
+      var pin = (e.parameter && e.parameter.pin) ? String(e.parameter.pin) : "";
+      if (!isValidAdminPin(pin)) {
+        return createJsonResponse({ error: "Unauthorized" });
+      }
+      var records = getAdminRecords();
+      return createJsonResponse(records.customers || []);
     }
 
     if (action === "offers") {
@@ -517,11 +670,61 @@ function getAdminRecords() {
     };
   });
 
+  // Read Customers / Custmers sheet
+  var customers = readSheetRows("Customers", function(row) {
+    var rawUrls = String(row[13] || "");
+    var images = rawUrls ? rawUrls.split("\n").filter(Boolean) : [];
+    return {
+      timestamp: formatSheetDate(row[0]),
+      id: row[1] || "",
+      fullName: row[2] || "",
+      phone: row[3] || "",
+      email: row[4] || "",
+      address: row[5] || "",
+      service: row[6] || "",
+      reference: row[7] || "",
+      visitDate: row[8] || "",
+      rating: parseInt(row[9], 10) || 5,
+      feedback: row[10] || "",
+      remarks: row[11] || "",
+      photosCount: parseInt(row[12], 10) || 0,
+      photoUrls: rawUrls,
+      images: images,
+      updatedAt: formatSheetDate(row[14])
+    };
+  });
+
+  if (customers.length === 0) {
+    customers = readSheetRows("Custmers", function(row) {
+      var rawUrls = String(row[13] || "");
+      var images = rawUrls ? rawUrls.split("\n").filter(Boolean) : [];
+      return {
+        timestamp: formatSheetDate(row[0]),
+        id: row[1] || "",
+        fullName: row[2] || "",
+        phone: row[3] || "",
+        email: row[4] || "",
+        address: row[5] || "",
+        service: row[6] || "",
+        reference: row[7] || "",
+        visitDate: row[8] || "",
+        rating: parseInt(row[9], 10) || 5,
+        feedback: row[10] || "",
+        remarks: row[11] || "",
+        photosCount: parseInt(row[12], 10) || 0,
+        photoUrls: rawUrls,
+        images: images,
+        updatedAt: formatSheetDate(row[14])
+      };
+    });
+  }
+
   return {
     contacts: contacts,
     bookings: bookings,
     feedback: feedback,
     billing: billing,
+    customers: customers,
     offersHistory: offersHistory,
     offers: getLatestOfferConfig(),
     counts: {
@@ -529,6 +732,7 @@ function getAdminRecords() {
       bookings: bookings.length,
       feedback: feedback.length,
       billing: billing.length,
+      customers: customers.length,
       offers: offersHistory.length
     }
   };
@@ -945,5 +1149,59 @@ function syncGoogleReviews() {
     } catch (e) {}
     return { status: "error", message: catchErr };
   }
+}
+
+// ---------- CUSTOMERS HELPERS ----------
+
+function getOrCreateCustomerMakeoverFolder() {
+  var folderName = "Azora Customer Makeovers";
+  var folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  var folder = DriveApp.createFolder(folderName);
+  folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return folder;
+}
+
+function getOrCreateCustomersSheet(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  // Support either "Customers" or "Custmers" tab
+  var sheet = ss.getSheetByName("Customers") || ss.getSheetByName("Custmers");
+  var headers = [
+    "Timestamp",
+    "Customer ID",
+    "Full Name",
+    "Phone",
+    "Email",
+    "Address",
+    "Services Availed",
+    "Reference Source",
+    "Visit Date",
+    "Rating",
+    "Feedback / Review",
+    "Stylist Remarks",
+    "Photos Count",
+    "Photo URLs",
+    "Updated At"
+  ];
+
+  if (!sheet) {
+    sheet = ss.insertSheet("Customers");
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 160); // Timestamp
+    sheet.setColumnWidth(2, 140); // Customer ID
+    sheet.setColumnWidth(3, 180); // Full Name
+    sheet.setColumnWidth(4, 130); // Phone
+    sheet.setColumnWidth(5, 180); // Email
+    sheet.setColumnWidth(6, 220); // Address
+    sheet.setColumnWidth(7, 240); // Services
+    sheet.setColumnWidth(8, 160); // Reference
+    sheet.setColumnWidth(11, 260); // Feedback
+    sheet.setColumnWidth(12, 260); // Stylist Remarks
+  }
+  return sheet;
 }
 

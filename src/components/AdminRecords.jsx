@@ -9,6 +9,7 @@ import {
   Search,
   Sparkles,
   X,
+  Users,
 } from 'lucide-react';
 import { getAdminRecords } from '../services/spreadsheetService';
 import { formatCurrency } from '../data/servicesCatalog';
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'bookings', label: 'Bookings', icon: Calendar },
   { id: 'contacts', label: 'Contact', icon: Mail },
   { id: 'billing', label: 'Billing', icon: Receipt },
+  { id: 'customers', label: 'Customers', icon: Users },
   { id: 'feedback', label: 'Feedback', icon: MessageSquare },
   { id: 'offers', label: 'Offers', icon: Sparkles },
 ];
@@ -187,6 +189,43 @@ export default function AdminRecords({ adminPin }) {
               ),
             },
             { key: 'quote', label: 'Review' },
+          ],
+        };
+      case 'customers':
+        return {
+          rows: filterRows(records.customers || [], [
+            'id',
+            'fullName',
+            'phone',
+            'email',
+            'address',
+            'service',
+            'reference',
+            'feedback',
+            'remarks',
+          ]),
+          emptyMessage: 'No customer profiles saved yet in Google Sheet.',
+          columns: [
+            { key: 'timestamp', label: 'Saved At', render: (r) => formatDate(r.timestamp) },
+            { key: 'id', label: 'Client ID' },
+            { key: 'fullName', label: 'Full Name' },
+            { key: 'phone', label: 'Phone' },
+            { key: 'address', label: 'Address / Area' },
+            { key: 'service', label: 'Services Availed' },
+            { key: 'reference', label: 'Reference' },
+            {
+              key: 'rating',
+              label: 'Rating',
+              render: (r) => (
+                <span className="admin-records-stars">
+                  {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                    <Star key={i} size={12} fill="currentColor" />
+                  ))}
+                </span>
+              ),
+            },
+            { key: 'feedback', label: 'Feedback' },
+            { key: 'remarks', label: 'Stylist Remarks' },
           ],
         };
       case 'offers':
