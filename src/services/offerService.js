@@ -72,6 +72,51 @@ function isWebhookConfigured(url) {
 }
 
 /**
+ * Resolves an offer image URL to ensure it renders reliably in both dev and production.
+ * Handles:
+ * 1. Missing / empty / undefined values -> defaults to SITE_IMAGES.offers
+ * 2. Vite dev-only paths (e.g. '/src/assets/Images/navratri-offers.jpg') -> defaults to SITE_IMAGES.offers
+ * 3. Filename references to default poster (e.g. 'navratri-offers.jpg') -> defaults to SITE_IMAGES.offers
+ * 4. Google Drive URLs (drive.google.com/file/d/..., open?id=..., uc?id=...) -> converted to direct thumbnail URL
+ * 5. Base64 data URIs and valid external URLs -> preserved
+ */
+export function resolveOfferBannerImage(imageUrl) {
+  if (!imageUrl || typeof imageUrl !== 'string') {
+    return SITE_IMAGES.offers;
+  }
+
+  const trimmed = imageUrl.trim();
+
+  // Empty, placeholder, or dev-only local path that doesn't exist in production dist bundle
+  if (
+    !trimmed ||
+    trimmed === 'DEFAULT' ||
+    trimmed.startsWith('/src/') ||
+    trimmed.startsWith('src/') ||
+    trimmed.includes('navratri-offers.jpg')
+  ) {
+    return SITE_IMAGES.offers;
+  }
+
+  // Base64 data URLs or production hashed asset URLs
+  if (trimmed.startsWith('data:image/') || trimmed.startsWith('/assets/')) {
+    return trimmed;
+  }
+
+  // Convert Google Drive share links to reliable direct thumbnail stream
+  const driveMatch =
+    trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+    trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+    trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1200`;
+  }
+
+  return trimmed;
+}
+
+/**
  * Returns the currently active offer configuration from localStorage,
  * falling back to DEFAULT_OFFER_CONFIG.
  */
@@ -83,6 +128,7 @@ export function getOfferConfig() {
     return {
       ...DEFAULT_OFFER_CONFIG,
       ...parsed,
+      image: resolveOfferBannerImage(parsed.image),
       combos: Array.isArray(parsed.combos) && parsed.combos.length > 0 
         ? parsed.combos 
         : DEFAULT_OFFER_CONFIG.combos,
@@ -111,6 +157,7 @@ export async function fetchOfferFromSpreadsheet() {
       const merged = {
         ...DEFAULT_OFFER_CONFIG,
         ...data,
+        image: resolveOfferBannerImage(data.image),
         combos: data.combos.length > 0 ? data.combos : DEFAULT_OFFER_CONFIG.combos,
         tags: Array.isArray(data.tags) ? data.tags : DEFAULT_OFFER_CONFIG.tags,
       };
@@ -148,6 +195,19 @@ export async function saveOfferToSpreadsheet(config, adminPin, base64Poster = nu
       }
     }
 
+    // Never save dev-only relative paths (like /src/assets/...) to Google Sheet
+    let imageToSave = config.image || '';
+    if (
+      imageToSave === SITE_IMAGES.offers ||
+      imageToSave.startsWith('/src/') ||
+      imageToSave.startsWith('src/') ||
+      imageToSave.includes('navratri-offers.jpg')
+    ) {
+      imageToSave = '';
+    } else {
+      imageToSave = resolveOfferBannerImage(imageToSave);
+    }
+
     const payload = {
       formType: 'saveOffer',
       pin: adminPin,
@@ -157,7 +217,7 @@ export async function saveOfferToSpreadsheet(config, adminPin, base64Poster = nu
       desc: config.desc || '',
       dateRange: config.dateRange || '',
       tags: Array.isArray(config.tags) ? config.tags : [],
-      image: config.image || '',
+      image: imageToSave,
       combos: Array.isArray(config.combos) ? config.combos : [],
       base64Poster: posterBase64 || undefined,
       mimeType: mimeType,

@@ -6,7 +6,132 @@ import { getTestimonials, saveToSpreadsheet } from '../services/spreadsheetServi
 import ScrollDownButton from './ScrollDownButton';
 import Logo from './Logo';
 import { SITE_IMAGES } from '../assets/siteImages';
-import OfferSection from './OfferSection';
+
+function TestimonialCard({ test }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const WORD_LIMIT = 20;
+
+  const quote = (test.quote || '').trim();
+  const words = quote ? quote.split(/\s+/) : [];
+  const isLong = words.length > WORD_LIMIT;
+
+  const truncatedQuote = isLong ? words.slice(0, WORD_LIMIT).join(' ') : quote;
+
+  return (
+    <div 
+      className="glass-panel animate-scale-up testimonial-card" 
+      style={{ 
+        padding: '2.2rem', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'space-between',
+        borderRadius: '16px',
+        transition: 'all 0.3s ease',
+        height: '100%',
+      }}
+    >
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.2rem' }}>
+          <div style={{ display: 'flex', gap: '0.2rem', color: 'var(--color-primary)' }}>
+            {[...Array(test.stars || 5)].map((_, i) => (
+              <Star key={i} size={15} fill="currentColor" />
+            ))}
+          </div>
+          {test.role && String(test.role).toLowerCase().includes('google') && (
+            <span style={{ 
+              fontSize: '0.72rem', 
+              color: 'var(--color-primary)', 
+              fontWeight: '600', 
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase'
+            }}>
+              ✓ Google Verified
+            </span>
+          )}
+        </div>
+
+        <p style={{ 
+          fontStyle: 'italic', 
+          color: 'var(--color-text)', 
+          fontSize: '0.94rem', 
+          marginBottom: '1.75rem', 
+          lineHeight: '1.7' 
+        }}>
+          "{isExpanded || !isLong ? quote : `${truncatedQuote}...`}"
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-primary)',
+                fontWeight: '600',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                padding: '0 0 0 6px',
+                fontStyle: 'normal',
+                textDecoration: 'underline',
+                textUnderlineOffset: '3px',
+                display: 'inline',
+              }}
+              aria-expanded={isExpanded}
+            >
+              {isExpanded ? 'Show less' : '..more'}
+            </button>
+          )}
+        </p>
+      </div>
+      
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '0.9rem', 
+        borderTop: '1px solid var(--color-border)', 
+        paddingTop: '1.25rem',
+        marginTop: 'auto'
+      }}>
+        <div style={{ 
+          width: '42px', 
+          height: '42px', 
+          borderRadius: '50%', 
+          backgroundColor: 'var(--color-primary)', 
+          color: 'var(--color-text-dark)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          fontWeight: '700', 
+          fontSize: '0.9rem',
+          flexShrink: 0
+        }}>
+          {test.avatar || (test.name ? test.name.trim().substring(0, 2).toUpperCase() : 'U')}
+        </div>
+        <div style={{ overflow: 'hidden' }}>
+          <h4 style={{ 
+            fontSize: '0.92rem', 
+            fontWeight: '600', 
+            color: 'var(--color-text-bright)', 
+            margin: 0,
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden'
+          }}>
+            {test.name}
+          </h4>
+          <p style={{ 
+            fontSize: '0.74rem', 
+            color: 'var(--color-text-muted)', 
+            textTransform: 'uppercase', 
+            letterSpacing: '0.05em',
+            margin: '2px 0 0'
+          }}>
+            {test.role}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home({ setActivePage, onOpenBooking, theme }) {
   const DEFAULT_TESTIMONIALS = [
@@ -292,11 +417,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
         </div>
       </section>
 
-      {/* Special Festive Offers Section */}
-      <OfferSection 
-        onOpenBooking={(serviceId) => onOpenBooking(serviceId || 'navratri-offers', 2)} 
-        onBookCombo={(combo) => onOpenBooking(combo.id, 2)}
-      />
+
 
       {/* Featured Services */}
       <section className="section-padding">
@@ -379,38 +500,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
           ) : (
             <div className="grid-3">
               {reviews.slice(0, 6).map((test, index) => (
-                <div 
-                  key={index} 
-                  className="glass-panel animate-scale-up" 
-                  style={{ 
-                    padding: '2.5rem', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'space-between',
-                    minHeight: '300px'
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', gap: '0.2rem', marginBottom: '1.25rem', color: 'var(--color-primary)' }}>
-                      {[...Array(test.stars)].map((_, i) => (
-                        <Star key={i} size={16} fill="currentColor" />
-                      ))}
-                    </div>
-                    <p style={{ fontStyle: 'italic', color: 'var(--color-text)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: '1.7' }}>
-                      "{test.quote}"
-                    </p>
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                    <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '0.95rem' }}>
-                      {test.avatar}
-                    </div>
-                    <div>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--color-text-bright)' }}>{test.name}</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{test.role}</p>
-                    </div>
-                  </div>
-                </div>
+                <TestimonialCard key={index} test={test} />
               ))}
             </div>
           )}

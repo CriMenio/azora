@@ -11,7 +11,6 @@ import {
   Calendar
 } from 'lucide-react';
 import { SERVICES_CATALOG, BOOKING_CATEGORIES } from '../data/servicesCatalog';
-import OfferSection from './OfferSection';
 
 const MAIN_CATEGORIES = [
   { 
@@ -196,14 +195,6 @@ export default function Services({ onBookService }) {
           </p>
         </div>
 
-        {/* Festive Special Offers Banner Section */}
-        <div style={{ marginBottom: '3.5rem' }}>
-          <OfferSection 
-            variant="compact" 
-            onOpenBooking={(serviceId) => onBookService(serviceId || 'navratri-offers', 2)} 
-            onBookCombo={(combo) => onBookService(combo.id, 2)}
-          />
-        </div>
 
         {/* Filter & Search Bar */}
         <div className="services-filter-bar">

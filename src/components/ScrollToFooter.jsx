@@ -1,18 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronsDown } from 'lucide-react';
+import { ChevronsDown, ChevronsUp } from 'lucide-react';
 
-export default function ScrollToFooter() {
-  const [isVisible, setIsVisible] = useState(false);
+export default function ScrollNavButtons() {
+  const [showUp, setShowUp] = useState(false);
+  const [showDown, setShowDown] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const footer = document.getElementById('site-footer');
       const scrollY = window.scrollY;
-      const nearFooter = footer
-        ? scrollY + window.innerHeight >= footer.offsetTop - 120
-        : false;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const footer = document.getElementById('site-footer');
 
-      setIsVisible(scrollY > 280 && !nearFooter);
+      // Show Up button whenever user has scrolled down into the page
+      const canScrollUp = scrollY > 200;
+
+      // Check if user is near the footer/bottom of the page
+      const nearFooter = footer
+        ? scrollY + windowHeight >= footer.offsetTop - 100
+        : scrollY + windowHeight >= documentHeight - 120;
+
+      // Show Down button when not near footer and page has more content below
+      const pageHasScrollableContent = documentHeight > windowHeight + 150;
+      const canScrollDown = !nearFooter && pageHasScrollableContent && (scrollY > 150 || documentHeight > windowHeight * 1.4);
+
+      setShowUp(canScrollUp);
+      setShowDown(canScrollDown);
     };
 
     handleScroll();
@@ -24,23 +37,52 @@ export default function ScrollToFooter() {
     };
   }, []);
 
-  const scrollToFooter = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
     const footer = document.getElementById('site-footer');
     if (footer) {
       footer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
     }
   };
 
   return (
-    <button
-      type="button"
-      className={`scroll-to-footer${isVisible ? ' is-visible' : ''}`}
-      onClick={scrollToFooter}
-      aria-label="Scroll to footer"
-      title="Go to footer"
-    >
-      <span className="scroll-to-footer-glow" aria-hidden="true" />
-      <ChevronsDown size={22} className="scroll-to-footer-icon" />
-    </button>
+    <div className="scroll-nav-group" aria-label="Page navigation">
+      {/* Up Navigation Button */}
+      <button
+        id="scroll-to-top-btn"
+        type="button"
+        className={`scroll-nav-btn scroll-nav-btn--up${showUp ? ' is-visible' : ''}`}
+        onClick={scrollToTop}
+        aria-label="Scroll to top of page"
+        title="Scroll to top"
+        tabIndex={showUp ? 0 : -1}
+      >
+        <span className="scroll-nav-glow" aria-hidden="true" />
+        <ChevronsUp size={22} className="scroll-nav-icon scroll-nav-icon--up" />
+      </button>
+
+      {/* Down Navigation Button */}
+      <button
+        id="scroll-to-bottom-btn"
+        type="button"
+        className={`scroll-nav-btn scroll-nav-btn--down${showDown ? ' is-visible' : ''}`}
+        onClick={scrollToBottom}
+        aria-label="Scroll to bottom of page"
+        title="Scroll to bottom / footer"
+        tabIndex={showDown ? 0 : -1}
+      >
+        <span className="scroll-nav-glow" aria-hidden="true" />
+        <ChevronsDown size={22} className="scroll-nav-icon scroll-nav-icon--down" />
+      </button>
+    </div>
   );
 }
+
+// Named alias export for backward compatibility
+export { ScrollNavButtons as ScrollToFooter };
+

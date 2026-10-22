@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles, Calendar, Phone, MessageCircle, Maximize2, X, Tag, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { SITE_IMAGES } from '../assets/siteImages';
-import { getOfferConfig, fetchOfferFromSpreadsheet } from '../services/offerService';
+import { getOfferConfig, fetchOfferFromSpreadsheet, resolveOfferBannerImage } from '../services/offerService';
 
 export default function OfferSection({ onOpenBooking, onBookCombo, variant = 'full' }) {
   const [offerConfig, setOfferConfig] = useState(getOfferConfig);
@@ -44,7 +44,7 @@ export default function OfferSection({ onOpenBooking, onBookCombo, variant = 'fu
     ? offerConfig.combos 
     : [];
 
-  const offerImage = offerConfig.image || SITE_IMAGES.offers;
+  const offerImage = resolveOfferBannerImage(offerConfig.image);
   const offerTitle = offerConfig.title || 'Navratri Special Offers';
   const offerBadge = offerConfig.badge || 'Festive Celebration Deals';
   const offerDesc = offerConfig.desc || 'Look Good · Feel Good · Celebrate You! Exclusive festive beauty combos, hair rituals, and luxury grooming packages at special celebration rates.';
@@ -117,6 +117,11 @@ export default function OfferSection({ onOpenBooking, onBookCombo, variant = 'fu
               className="azora-offer-banner-img"
               loading="lazy"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                if (e.currentTarget.src !== SITE_IMAGES.offers) {
+                  e.currentTarget.src = SITE_IMAGES.offers;
+                }
+              }}
             />
             <div className="azora-offer-banner-overlay" aria-hidden="true">
               <span className="azora-offer-zoom-btn">
@@ -215,6 +220,11 @@ export default function OfferSection({ onOpenBooking, onBookCombo, variant = 'fu
               alt={offerTitle}
               className="azora-offer-modal-img"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                if (e.currentTarget.src !== SITE_IMAGES.offers) {
+                  e.currentTarget.src = SITE_IMAGES.offers;
+                }
+              }}
             />
             <div className="azora-offer-modal-footer">
               <span className="azora-offer-modal-title">{offerTitle}</span>

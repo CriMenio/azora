@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  Sparkles,
   Calendar,
   MessageCircle,
   Phone,
   ShieldCheck,
-  CheckCircle2,
-  ArrowRight,
   HeartHandshake,
   Award,
   Scissors,
@@ -120,71 +116,6 @@ export default function Offers({ onOpenBooking, setActivePage }) {
 
   return (
     <div className="azora-offers-page">
-      {/* Hero Header */}
-      <section className="azora-offers-hero">
-        <div className="container">
-          <div className="azora-offers-hero-content text-center">
-            <div className="azora-offers-hero-badge">
-              <Sparkles size={15} className="text-gold" />
-              <span>
-                {isSeasonalActive ? 'Festive & Seasonal Celebrations' : 'Curated Experiences & Bespoke Rituals'}
-              </span>
-            </div>
-
-            <h1 className="azora-offers-hero-title">
-              {isSeasonalActive ? 'Special Offers & Packages' : 'Curated Packages & Bespoke Rituals'}
-            </h1>
-
-            <p className="azora-offers-hero-desc">
-              {isSeasonalActive
-                ? 'Indulge in tailored festive combos, rejuvenating hair rituals, and luxury grooming packages crafted with care at Azora Salon & Spa, Kamothe.'
-                : 'Indulge in personalized full-service makeover rituals, bespoke bridal preparations, and luxury grooming packages crafted with care by founder Preeti at Azora Salon & Spa.'
-              }
-            </p>
-
-            <div className="azora-offers-hero-actions">
-              {isSeasonalActive ? (
-                <>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => onOpenBooking('offer-combo', 1)}
-                  >
-                    <Calendar size={16} /> Book Current Offer
-                  </button>
-                  <a
-                    href={`https://wa.me/917021929588?text=${whatsappMessage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-gold"
-                  >
-                    <MessageCircle size={16} /> WhatsApp Inquiry
-                  </a>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/services"
-                    className="btn btn-primary"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  >
-                    Explore Complete Menu <ArrowRight size={16} />
-                  </Link>
-                  <a
-                    href={`https://wa.me/917021929588?text=${whatsappMessage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-gold"
-                  >
-                    <MessageCircle size={16} /> Request Custom Package
-                  </a>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Main Content Area */}
       {isSeasonalActive ? (
         /* Active Seasonal Interactive Showcase */

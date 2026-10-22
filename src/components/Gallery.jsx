@@ -48,6 +48,11 @@ function GalleryCard({ item, index, onOpen }) {
           className="gallery-img"
           loading="lazy"
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            if (STATIC_GALLERY_ITEMS[0]?.image && e.currentTarget.src !== STATIC_GALLERY_ITEMS[0]?.image) {
+              e.currentTarget.src = STATIC_GALLERY_ITEMS[0]?.image;
+            }
+          }}
         />
         <div className="gallery-shine" aria-hidden="true" />
 
@@ -335,6 +340,11 @@ export default function Gallery() {
                     alt={currentItem.title}
                     className={`lightbox-image ${lightboxMotionClass}`}
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      if (STATIC_GALLERY_ITEMS[0]?.image && e.currentTarget.src !== STATIC_GALLERY_ITEMS[0]?.image) {
+                        e.currentTarget.src = STATIC_GALLERY_ITEMS[0]?.image;
+                      }
+                    }}
                   />
                 </div>
 

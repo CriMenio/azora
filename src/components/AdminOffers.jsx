@@ -22,7 +22,9 @@ import {
   saveOfferToSpreadsheet,
   fetchOfferFromSpreadsheet,
   DEFAULT_OFFER_CONFIG,
+  resolveOfferBannerImage,
 } from '../services/offerService';
+import { SITE_IMAGES } from '../assets/siteImages';
 import { uploadGalleryImage } from '../services/galleryService';
 
 const CATEGORY_OPTIONS = ['Beauty', 'Hair', 'Nails', 'Grooming'];
@@ -363,10 +365,15 @@ export default function AdminOffers({ adminPin }) {
 
             <div className="admin-offers-banner-preview-box">
               <img
-                src={config.image}
+                src={resolveOfferBannerImage(config.image)}
                 alt={config.title}
                 className="admin-offers-banner-preview-img"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  if (e.currentTarget.src !== SITE_IMAGES.offers) {
+                    e.currentTarget.src = SITE_IMAGES.offers;
+                  }
+                }}
               />
               <span className="admin-banner-preview-overlay-tag">Active Template</span>
             </div>

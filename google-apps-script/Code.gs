@@ -294,6 +294,14 @@ function doGet(e) {
       return createJsonResponse(getAdminRecords());
     }
 
+    if (action === "syncReviews") {
+      var pin = (e.parameter && e.parameter.pin) ? String(e.parameter.pin) : "";
+      if (!isValidAdminPin(pin)) {
+        return createJsonResponse({ error: "Unauthorized" });
+      }
+      return createJsonResponse(syncGoogleReviews());
+    }
+
     if (action === "offers") {
       // Public endpoint — returns latest active offer configuration & poster from Offers sheet
       var latestOffer = getLatestOfferConfig(SpreadsheetApp.getActiveSpreadsheet());
@@ -833,3 +841,109 @@ function sendBookingNotifications(data) {
     Logger.log("sendBookingNotifications error: " + err);
   }
 }
+
+// ---------- GOOGLE REVIEWS AUTO-SYNC ----------
+
+/**
+ * Creates a convenient custom menu in Google Sheets
+ * to trigger review sync with one click.
+ */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu("Azora Salon")
+      .addItem("🔄 Sync Google Reviews Now", "syncGoogleReviews")
+      .addToUi();
+  } catch (e) {
+    // onOpen might run in context without UI (e.g. triggers), safe to ignore
+  }
+}
+
+/**
+ * Automatically fetches top 5 Google Reviews using Google Places API
+ * and appends any new reviews into the "Feedback" sheet.
+ */
+function syncGoogleReviews() {
+  var props = PropertiesService.getScriptProperties();
+  var apiKey = props.getProperty("GOOGLE_PLACES_API_KEY");
+  var placeId = props.getProperty("GOOGLE_PLACE_ID"); // Azora Salon's Place ID
+
+  if (!apiKey || !placeId) {
+    var errorMsg = "Missing GOOGLE_PLACES_API_KEY or GOOGLE_PLACE_ID in Script Properties.";
+    Logger.log(errorMsg);
+    try {
+      SpreadsheetApp.getActiveSpreadsheet().toast(errorMsg, "Google Reviews Sync", 8);
+    } catch (e) {}
+    return { status: "error", message: errorMsg };
+  }
+
+  var url = "https://maps.googleapis.com/maps/api/place/details/json"
+    + "?place_id=" + encodeURIComponent(placeId)
+    + "&fields=name,rating,reviews"
+    + "&reviews_sort=newest"
+    + "&key=" + encodeURIComponent(apiKey);
+
+  try {
+    var response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var data = JSON.parse(response.getContentText());
+
+    if (data.status !== "OK" || !data.result || !data.result.reviews) {
+      var apiErr = "Places API error: " + (data.error_message || data.status);
+      Logger.log(apiErr);
+      try {
+        SpreadsheetApp.getActiveSpreadsheet().toast(apiErr, "Google Reviews Sync", 8);
+      } catch (e) {}
+      return { status: "error", message: apiErr };
+    }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Feedback");
+    if (!sheet) {
+      sheet = ss.insertSheet("Feedback");
+      sheet.appendRow(["Timestamp", "Name", "Role", "Quote", "Stars"]);
+      sheet.getRange(1, 1, 1, 5).setFontWeight("bold");
+    }
+
+    var existingQuotes = sheet.getDataRange().getValues().map(function(row) {
+      return String(row[3] || "").trim().toLowerCase();
+    });
+
+    var reviews = data.result.reviews;
+    var addedCount = 0;
+
+    for (var i = 0; i < reviews.length; i++) {
+      var r = reviews[i];
+      var quoteText = (r.text || "").trim();
+
+      // Only import 4-star and 5-star reviews with text that aren't already in the sheet
+      if (r.rating >= 4 && quoteText && existingQuotes.indexOf(quoteText.toLowerCase()) === -1) {
+        var reviewDate = r.time ? new Date(r.time * 1000).toISOString() : new Date().toISOString();
+        sheet.appendRow([
+          reviewDate,
+          r.author_name || "Google User",
+          "Google Verified Review",
+          quoteText,
+          r.rating || 5
+        ]);
+        existingQuotes.push(quoteText.toLowerCase());
+        addedCount++;
+      }
+    }
+
+    var resultMsg = "Successfully imported " + addedCount + " new Google review(s).";
+    Logger.log(resultMsg);
+    try {
+      SpreadsheetApp.getActiveSpreadsheet().toast(resultMsg, "Google Reviews Sync", 5);
+    } catch (e) {}
+
+    return { status: "success", added: addedCount, message: resultMsg };
+  } catch (err) {
+    var catchErr = "Failed to sync Google reviews: " + err.toString();
+    Logger.log(catchErr);
+    try {
+      SpreadsheetApp.getActiveSpreadsheet().toast(catchErr, "Google Reviews Sync", 8);
+    } catch (e) {}
+    return { status: "error", message: catchErr };
+  }
+}
+
