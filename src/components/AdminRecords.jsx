@@ -8,6 +8,7 @@ import {
   Star,
   Search,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { getAdminRecords } from '../services/spreadsheetService';
 import { formatCurrency } from '../data/servicesCatalog';
@@ -299,7 +300,7 @@ export default function AdminRecords({ adminPin }) {
         </div>
 
         <div className="admin-records-search">
-          <Search size={16} />
+          <Search size={16} className="admin-records-search-icon" aria-hidden="true" />
           <input
             type="search"
             className="form-control"
@@ -307,6 +308,17 @@ export default function AdminRecords({ adminPin }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {search && (
+            <button
+              type="button"
+              className="admin-records-search-clear"
+              onClick={() => setSearch('')}
+              title="Clear search"
+              aria-label="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 

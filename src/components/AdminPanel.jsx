@@ -722,6 +722,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
                 value={selectedCatalogId}
                 onChange={setSelectedCatalogId}
                 placeholder="— Select service from list —"
+                searchPlaceholder="Type to search service (e.g. Pedicure, Wax, Facial)..."
                 options={SERVICES_CATALOG.map((service) => ({
                   value: service.id,
                   label: service.name,
