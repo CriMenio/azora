@@ -115,7 +115,7 @@ export default function Header({ onOpenBooking, theme, toggleTheme }) {
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          <button className="btn btn-outline-gold" onClick={onOpenBooking}>
+          <button className="btn btn-outline-gold" onClick={() => onOpenBooking?.()}>
             Book Appointment
           </button>
 

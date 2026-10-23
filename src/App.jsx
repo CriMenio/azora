@@ -94,8 +94,10 @@ export default function App() {
   };
 
   const handleOpenBooking = (serviceId = '', step = 1) => {
-    setSelectedServiceId(serviceId);
-    setBookingInitialStep(step);
+    const safeServiceId = typeof serviceId === 'string' ? serviceId : '';
+    const safeStep = typeof step === 'number' ? step : 1;
+    setSelectedServiceId(safeServiceId);
+    setBookingInitialStep(safeStep);
     setIsBookingOpen(true);
   };
 

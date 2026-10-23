@@ -77,9 +77,12 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
   const receiptRef = useRef(null);
 
   useEffect(() => {
-    if (initialServiceId) {
-      setFormData(prev => ({ ...prev, serviceIds: [initialServiceId] }));
-      const startStep = initialStep === 2 || initialServiceId.startsWith('offer-') ? 2 : 1;
+    const validServiceId = typeof initialServiceId === 'string' ? initialServiceId : '';
+    const validStep = typeof initialStep === 'number' ? initialStep : 1;
+
+    if (validServiceId) {
+      setFormData(prev => ({ ...prev, serviceIds: [validServiceId] }));
+      const startStep = validStep === 2 || validServiceId.startsWith('offer-') ? 2 : 1;
       setStep(startStep);
       setBookingNo('');
     } else {
@@ -94,25 +97,35 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
         phone: '',
         notes: ''
       }));
-      setStep(1);
+      setStep(validStep);
       setBookingNo('');
     }
+    setIsServiceDropdownOpen(false);
     setErrors({});
     setWhatsappUrl('');
     setServiceSearch('');
   }, [initialServiceId, initialStep, isOpen]);
 
   useEffect(() => {
+    if (!isServiceDropdownOpen) return undefined;
+
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsServiceDropdownOpen(false);
       }
     };
-    if (isServiceDropdownOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    }
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setIsServiceDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isServiceDropdownOpen]);
 
@@ -331,9 +344,13 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                 </div>
                 
                 {/* Custom Dropdown Trigger */}
-                <div 
+                <button 
+                  type="button"
+                  id="booking-service-dropdown-trigger"
                   className="form-control" 
-                  onClick={() => setIsServiceDropdownOpen(!isServiceDropdownOpen)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isServiceDropdownOpen}
+                  onClick={() => setIsServiceDropdownOpen(prev => !prev)}
                   style={{
                     cursor: 'pointer',
                     display: 'flex',
@@ -342,7 +359,12 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                     minHeight: '48px',
                     borderColor: isServiceDropdownOpen ? 'var(--color-primary)' : 'var(--color-border)',
                     boxShadow: isServiceDropdownOpen ? 'var(--shadow-glow)' : 'none',
-                    paddingRight: '1.2rem'
+                    paddingRight: '1.2rem',
+                    textAlign: 'left',
+                    background: 'var(--color-surface-hover)',
+                    color: 'var(--color-text)',
+                    fontFamily: 'inherit',
+                    width: '100%'
                   }}
                 >
                   <span style={{ 
@@ -366,7 +388,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                   }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </span>
-                </div>
+                </button>
 
                 {/* Custom Dropdown Menu — inline so fields below stay visible */}
                 {isServiceDropdownOpen && (

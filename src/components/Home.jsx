@@ -352,7 +352,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
             )}
 
             <div className="hero-cta">
-              <button className="btn btn-primary" onClick={onOpenBooking}>
+              <button className="btn btn-primary" onClick={() => onOpenBooking?.()}>
                 Book Appointment
               </button>
               <Link 
@@ -453,7 +453,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
                   <button 
                     className="btn btn-outline-gold" 
                     style={{ width: '100%', padding: '0.75rem' }}
-                    onClick={onOpenBooking}
+                    onClick={() => onOpenBooking?.()}
                   >
                     Reserve Now
                   </button>
@@ -656,7 +656,7 @@ export default function Home({ setActivePage, onOpenBooking, theme }) {
               </div>
 
               <div className="hero-cta">
-                <button className="btn btn-primary" onClick={onOpenBooking}>
+                <button className="btn btn-primary" onClick={() => onOpenBooking?.()}>
                   Book Appointment
                 </button>
                 <a 
