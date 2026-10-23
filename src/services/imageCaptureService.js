@@ -4,7 +4,6 @@ import html2canvas from 'html2canvas';
 const CAPTURE_OPTIONS = {
   cacheBust: true,
   pixelRatio: 2,
-  backgroundColor: '#faf8f5',
   skipFonts: true,
 };
 
@@ -35,7 +34,7 @@ function canvasToBlob(canvas) {
 /**
  * Captures a DOM element as PNG blob. Tries html-to-image first, then html2canvas.
  */
-export async function captureElementAsBlob(element) {
+export async function captureElementAsBlob(element, customOptions = {}) {
   if (!element) {
     throw new Error('Element not found');
   }
@@ -44,17 +43,36 @@ export async function captureElementAsBlob(element) {
   const height = element.offsetHeight || element.scrollHeight;
 
   if (!width || !height) {
-    throw new Error('Bill preview is not visible. Generate the bill first.');
+    throw new Error('Receipt preview is not visible.');
+  }
+
+  let bg = customOptions.backgroundColor;
+  if (!bg) {
+    try {
+      const computed = window.getComputedStyle(element).backgroundColor;
+      if (computed && computed !== 'transparent' && computed !== 'rgba(0, 0, 0, 0)') {
+        bg = computed;
+      }
+    } catch {
+      // fallback
+    }
+  }
+  if (!bg) {
+    bg = '#141414';
   }
 
   const captureOptions = {
     ...CAPTURE_OPTIONS,
+    backgroundColor: bg,
     width,
     height,
+    ...customOptions,
     style: {
       transform: 'none',
       boxShadow: 'none',
       overflow: 'visible',
+      backgroundColor: bg,
+      ...(customOptions.style || {}),
     },
   };
 
@@ -68,7 +86,7 @@ export async function captureElementAsBlob(element) {
   try {
     const canvas = await html2canvas(element, {
       scale: 2,
-      backgroundColor: '#faf8f5',
+      backgroundColor: bg,
       useCORS: true,
       logging: false,
       allowTaint: false,
@@ -84,7 +102,7 @@ export async function captureElementAsBlob(element) {
     }
   } catch (error) {
     console.error('html2canvas capture failed:', error);
-    throw new Error('Unable to capture bill image. Please try again.');
+    throw new Error('Unable to capture slip image. Please try again.');
   }
 }
 

@@ -133,7 +133,9 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
     if (!receiptRef.current || !bookingNo) return;
     setDownloadingReceipt(true);
     try {
-      const blob = await captureElementAsBlob(receiptRef.current);
+      const blob = await captureElementAsBlob(receiptRef.current, {
+        backgroundColor: '#141414',
+      });
       downloadBlob(blob, `azora-appointment-${bookingNo}.png`);
     } catch (error) {
       console.error('Failed to download receipt:', error);
@@ -716,69 +718,110 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
                 ref={receiptRef}
                 className="booking-receipt-card"
                 style={{
-                  border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                  border: '1.5px solid rgba(212, 175, 55, 0.45)',
                   borderRadius: '12px',
-                  background: 'var(--color-surface)',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+                  backgroundColor: '#141414',
+                  background: '#141414',
+                  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.5)',
                   padding: '1.75rem',
                   maxWidth: '460px',
-                  margin: '0 auto'
+                  margin: '0 auto',
+                  textAlign: 'left',
+                  color: '#ffffff',
+                  fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                <div 
+                  className="receipt-header"
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.12)', 
+                    paddingBottom: '1rem', 
+                    marginBottom: '1.25rem' 
+                  }}
+                >
                   <div>
-                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.08em', fontWeight: '600' }}>APPOINTMENT NO</span>
-                    <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-primary)', margin: '0.15rem 0 0', letterSpacing: '0.04em' }}>{bookingNo}</h4>
+                    <span 
+                      className="receipt-title-label"
+                      style={{ 
+                        fontSize: '0.72rem', 
+                        textTransform: 'uppercase', 
+                        color: '#9ca3af', 
+                        letterSpacing: '0.08em', 
+                        fontWeight: '600',
+                        display: 'block'
+                      }}
+                    >
+                      APPOINTMENT NO
+                    </span>
+                    <h4 
+                      className="receipt-booking-no"
+                      style={{ 
+                        fontSize: '1.35rem', 
+                        fontWeight: '700', 
+                        color: '#d4af37', 
+                        margin: '0.2rem 0 0', 
+                        letterSpacing: '0.04em',
+                        fontFamily: "'Playfair Display', Georgia, serif"
+                      }}
+                    >
+                      {bookingNo}
+                    </h4>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      textTransform: 'uppercase', 
-                      letterSpacing: '0.08em', 
-                      fontWeight: '700',
-                      padding: '0.3rem 0.75rem',
-                      borderRadius: '99px',
-                      background: 'rgba(76, 175, 80, 0.12)',
-                      border: '1px solid rgba(76, 175, 80, 0.35)',
-                      color: '#4caf50',
-                      display: 'inline-block'
-                    }}>
+                    <span 
+                      className="receipt-badge"
+                      style={{ 
+                        fontSize: '0.75rem', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.08em', 
+                        fontWeight: '700',
+                        padding: '0.35rem 0.85rem',
+                        borderRadius: '9999px',
+                        backgroundColor: 'rgba(76, 175, 80, 0.15)',
+                        border: '1px solid rgba(76, 175, 80, 0.45)',
+                        color: '#4caf50',
+                        display: 'inline-block'
+                      }}
+                    >
                       CONFIRMED
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.92rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Client:</span>
-                    <span style={{ fontWeight: '600', color: 'var(--color-text-bright)' }}>{formData.name}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.94rem' }}>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Client:</span>
+                    <span className="receipt-value" style={{ fontWeight: '700', color: '#ffffff', textAlign: 'right' }}>{formData.name}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Phone:</span>
-                    <span style={{ fontWeight: '500' }}>{formData.phone}</span>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Phone:</span>
+                    <span className="receipt-value" style={{ fontWeight: '600', color: '#ffffff', textAlign: 'right' }}>{formData.phone}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Services:</span>
-                    <span style={{ fontWeight: '600', textAlign: 'right', maxWidth: '68%', color: 'var(--color-primary)' }}>
-                      {selectedServices.map(s => s.name).join(', ')}
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Services:</span>
+                    <span className="receipt-value-gold" style={{ fontWeight: '700', textAlign: 'right', maxWidth: '68%', color: '#d4af37' }}>
+                      {selectedServices.map(s => s.name).join(', ') || 'Custom Service'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Stylist:</span>
-                    <span style={{ fontWeight: '500' }}>{selectedStylist?.name || 'Preeti'}</span>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Stylist:</span>
+                    <span className="receipt-value" style={{ fontWeight: '600', color: '#ffffff', textAlign: 'right' }}>{selectedStylist?.name || 'Preeti'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Date:</span>
-                    <span style={{ fontWeight: '600' }}>{formData.date}</span>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Date:</span>
+                    <span className="receipt-value" style={{ fontWeight: '700', color: '#ffffff', textAlign: 'right' }}>{formData.date}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <span style={{ color: 'var(--color-text-muted)' }}>Time Slot:</span>
-                    <span style={{ fontWeight: '600', color: 'var(--color-primary)' }}>{formData.timeSlot}</span>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    <span className="receipt-label" style={{ color: '#9ca3af' }}>Time Slot:</span>
+                    <span className="receipt-value-gold" style={{ fontWeight: '700', color: '#d4af37', textAlign: 'right' }}>{formData.timeSlot}</span>
                   </div>
                   {formData.notes?.trim() && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderTop: '1px dashed var(--color-border)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.84rem' }}>Notes:</span>
-                      <span style={{ fontWeight: '400', fontSize: '0.84rem', textAlign: 'right', maxWidth: '70%', color: 'var(--color-text-muted)' }}>
+                    <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', borderTop: '1px dashed rgba(255, 255, 255, 0.15)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                      <span className="receipt-label" style={{ color: '#9ca3af', fontSize: '0.84rem' }}>Notes:</span>
+                      <span style={{ fontWeight: '400', fontSize: '0.84rem', textAlign: 'right', maxWidth: '70%', color: '#d1d5db' }}>
                         {formData.notes}
                       </span>
                     </div>

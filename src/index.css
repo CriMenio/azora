@@ -1299,15 +1299,81 @@ select.form-control option {
 }
 
 .booking-receipt-card {
-  background-color: var(--color-surface-accent);
-  border: 1px dashed var(--color-border);
-  padding: 2rem;
-  border-radius: 4px;
+  background-color: #141414 !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.45) !important;
+  padding: 1.75rem !important;
+  border-radius: 12px !important;
   text-align: left;
-  max-width: 440px;
-  margin: 0 auto 0;
-  font-family: var(--font-body);
-  color: var(--color-text);
+  max-width: 460px;
+  margin: 0 auto;
+  font-family: var(--font-body, system-ui, sans-serif);
+  color: #ffffff !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+.booking-receipt-card .receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.booking-receipt-card .receipt-title-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: #9ca3af !important;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  display: block;
+}
+
+.booking-receipt-card .receipt-booking-no {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #d4af37 !important;
+  margin: 0.2rem 0 0;
+  letter-spacing: 0.04em;
+  font-family: var(--font-heading, Georgia, serif);
+}
+
+.booking-receipt-card .receipt-badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(76, 175, 80, 0.15) !important;
+  border: 1px solid rgba(76, 175, 80, 0.45) !important;
+  color: #4caf50 !important;
+  display: inline-block;
+}
+
+.booking-receipt-card .receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  font-size: 0.94rem;
+}
+
+.booking-receipt-card .receipt-label {
+  color: #9ca3af !important;
+  flex-shrink: 0;
+}
+
+.booking-receipt-card .receipt-value {
+  color: #ffffff !important;
+  font-weight: 600;
+  text-align: right;
+}
+
+.booking-receipt-card .receipt-value-gold {
+  color: #d4af37 !important;
+  font-weight: 700;
+  text-align: right;
 }
 
 /* ==========================================

@@ -46,7 +46,9 @@ export async function shareReceiptToWhatsApp(receiptElement, message, bookingNo)
     throw new Error('Receipt element not found');
   }
 
-  const blob = await captureElementAsBlob(receiptElement);
+  const blob = await captureElementAsBlob(receiptElement, {
+    backgroundColor: '#141414',
+  });
   const filename = `azora-appointment-${bookingNo}.png`;
   const file = new File([blob], filename, { type: 'image/png' });
 
