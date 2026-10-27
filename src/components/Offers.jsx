@@ -303,18 +303,18 @@ export default function Offers({ onOpenBooking, setActivePage }) {
           </div>
           <div className="azora-offers-cta-actions">
             <a
-              href="tel:+917021929588"
-              className="btn btn-secondary"
-            >
-              <Phone size={16} /> Call +91 70219 29588
-            </a>
-            <a
               href={`https://wa.me/917021929588?text=${whatsappMessage}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary"
             >
               <MessageCircle size={16} /> Chat on WhatsApp
+            </a>
+            <a
+              href="tel:+917021929588"
+              className="btn btn-secondary"
+            >
+              <Phone size={16} /> Call +91 70219 29588
             </a>
           </div>
         </div>

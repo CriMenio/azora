@@ -6352,16 +6352,30 @@ select.form-control option {
   .azora-offers-bottom-cta {
     flex-direction: column;
     align-items: stretch;
+    text-align: center;
+    padding: 1.75rem 1.25rem;
+    border-radius: 16px;
   }
 
   .azora-bottom-cta-buttons {
     width: 100%;
     flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
   }
 
   .azora-bottom-cta-buttons .btn {
     width: 100%;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    white-space: nowrap;
+    text-align: center;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    border-radius: 8px;
+    box-sizing: border-box;
   }
 }
 
@@ -7493,6 +7507,15 @@ select.form-control option {
   margin-top: auto;
 }
 
+.azora-curated-footer .btn {
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
 /* VIP Alert Banner */
 .azora-vip-banner {
   border-radius: 16px;
@@ -7691,34 +7714,97 @@ select.form-control option {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
+[data-theme="light"] .azora-offers-cta-box {
+  background: linear-gradient(135deg, #ffffff 0%, #fdfbf7 100%);
+  border: 1.5px solid #e2dad0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
 .azora-offers-cta-box h3 {
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--color-text-bright);
   margin-bottom: 0.4rem;
+  font-family: var(--font-heading);
 }
 
 .azora-offers-cta-box p {
   color: var(--color-text-muted);
   font-size: 0.95rem;
   margin: 0;
+  line-height: 1.55;
 }
 
 .azora-offers-cta-actions {
   display: flex;
+  align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+}
+
+.azora-offers-cta-actions .btn {
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+[data-theme="light"] .azora-offers-cta-actions .btn-secondary {
+  background: #ffffff;
+  border: 1.5px solid #dcd5c7;
+  color: #2c2a25;
+}
+
+[data-theme="light"] .azora-offers-cta-actions .btn-secondary:hover {
+  background: #f8f5ee;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+[data-theme="light"] .azora-offers-cta-actions .btn-primary {
+  background: linear-gradient(135deg, #b8860b 0%, #a88114 100%);
+  border: 1.5px solid #a88114;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(168, 129, 20, 0.25);
 }
 
 @media (max-width: 992px) {
   .azora-offers-cta-box {
     flex-direction: column;
     text-align: center;
-    padding: 2rem;
+    padding: 2.25rem 1.75rem;
+    gap: 1.5rem;
   }
+}
+
+@media (max-width: 768px) {
+  .azora-offers-cta-box {
+    padding: 1.75rem 1.25rem;
+    border-radius: 16px;
+  }
+
   .azora-offers-cta-actions {
-    justify-content: center;
+    flex-direction: column;
     width: 100%;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .azora-offers-cta-actions .btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    text-align: center;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -10031,6 +10117,53 @@ select.form-control option {
   background: rgba(239, 68, 68, 0.12);
   border-color: #ef4444;
 }
+
+@media (max-width: 640px) {
+  .admin-packages-records-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .admin-package-record-card {
+    padding: 1.15rem 1rem;
+  }
+
+  .pkg-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .pkg-act-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    padding: 0.55rem 0.35rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+
+  .pkg-act-btn svg {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .pkg-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+  }
+
+  .pkg-act-btn--primary {
+    grid-column: span 2;
+    padding: 0.6rem 0.5rem;
+  }
+}
+
 
 /* Individual Package Modal */
 .admin-package-record-modal {
