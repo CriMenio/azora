@@ -293,17 +293,17 @@ export function resetOfferConfig() {
 export function getOfferCombosAsServices() {
   const config = getOfferConfig();
   if (!config.isActive || !Array.isArray(config.combos)) return [];
-  return config.combos.map((combo) => ({
-    id: combo.id,
-    name: combo.name,
-    rawName: combo.name,
-    price: combo.numericPrice || 0,
-    displayPrice: combo.price,
+  return config.combos.map((combo, idx) => ({
+    id: combo.id || `offer-combo-${idx}-${(combo.name || 'deal').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    name: combo.name || combo.desc || 'Special Offer Combo',
+    rawName: combo.name || combo.desc || 'Special Offer Combo',
+    price: combo.numericPrice || parseInt(String(combo.price || '').replace(/[^0-9]/g, ''), 10) || 0,
+    displayPrice: combo.price || 'Special Deal',
     category: 'offer',
     bookingCategory: 'Special Offers',
     duration: '60 mins',
     popular: true,
-    desc: combo.desc || '',
+    desc: combo.desc || combo.name || '',
     isOffer: true,
   }));
 }
