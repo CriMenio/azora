@@ -22,7 +22,7 @@ export default function App() {
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [bookingInitialStep, setBookingInitialStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
-  
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
   });
@@ -131,8 +131,8 @@ export default function App() {
       {showCelebration && <Celebration />}
 
       {/* Premium Sticky Navigation Header */}
-      <Header 
-        onOpenBooking={() => handleOpenBooking()} 
+      <Header
+        onOpenBooking={() => handleOpenBooking()}
         theme={theme}
         toggleTheme={toggleTheme}
       />
@@ -145,13 +145,13 @@ export default function App() {
             element={
               <>
                 <SeoMeta
-                  title="Azora Salon & Spa | Premium Hair, Beauty & Grooming in Kamothe, Navi Mumbai"
-                  description="Experience premium grooming, hair spa, balayage coloring, and rejuvenating beauty treatments at Azora Salon & Spa in Kamothe, Navi Mumbai. Book your experience today."
+                  title="Azora Family Salon | Premium Hair, Beauty & Grooming in Kamothe, Navi Mumbai"
+                  description="Experience premium grooming, hair spa, balayage coloring, and rejuvenating beauty treatments at Azora Salon in Kamothe, Navi Mumbai. Book your experience today."
                   canonicalPath="/"
                 />
-                <Home 
-                  setActivePage={navigateTo} 
-                  onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)} 
+                <Home
+                  setActivePage={navigateTo}
+                  onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)}
                   theme={theme}
                 />
               </>
@@ -166,8 +166,8 @@ export default function App() {
                   description="Explore our full menu of hair styling, keratin treatments, skin care, facials, bridal packages, and grooming rituals at Azora Salon & Spa."
                   canonicalPath="/services"
                 />
-                <Services 
-                  onBookService={(serviceId, step) => handleOpenBooking(serviceId, step)} 
+                <Services
+                  onBookService={(serviceId, step) => handleOpenBooking(serviceId, step)}
                 />
               </>
             }
@@ -181,8 +181,8 @@ export default function App() {
                   description="Check out current seasonal salon offers, bridal specials, combo packages, and exclusive grooming deals at Azora Salon."
                   canonicalPath="/offers"
                 />
-                <Offers 
-                  onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)} 
+                <Offers
+                  onOpenBooking={(serviceId, step) => handleOpenBooking(serviceId, step)}
                   setActivePage={navigateTo}
                 />
               </>
@@ -237,10 +237,10 @@ export default function App() {
       <ScrollToFooter />
 
       {/* Step-by-Step Booking Form wizard Modal */}
-      <BookingModal 
-        isOpen={isBookingOpen} 
-        onClose={handleCloseBooking} 
-        initialServiceId={selectedServiceId} 
+      <BookingModal
+        isOpen={isBookingOpen}
+        onClose={handleCloseBooking}
+        initialServiceId={selectedServiceId}
         initialStep={bookingInitialStep}
         theme={theme}
       />

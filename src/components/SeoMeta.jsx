@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-const SITE_URL = typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost') 
-  ? window.location.origin 
+const SITE_URL = typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost')
+  ? window.location.origin
   : 'https://azorasalaon.in';
 
 export default function SeoMeta({
-  title = 'Azora Salon & Spa | Premium Hair, Beauty & Grooming in Kamothe, Navi Mumbai',
-  description = 'Experience premium grooming, hair spa, balayage coloring, and rejuvenating beauty treatments at Azora Salon & Spa in Kamothe, Navi Mumbai. Book your experience today.',
+  title = 'Azora Family Salon Premium Hair, Beauty & Grooming in Kamothe, Navi Mumbai',
+  description = 'Experience premium grooming, hair spa, balayage coloring, and rejuvenating beauty treatments at Azora Salon in Kamothe, Navi Mumbai. Book your experience today.',
   canonicalPath,
   noindex = false,
 }) {
