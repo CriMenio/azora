@@ -2,65 +2,255 @@ import { SITE_IMAGES } from '../assets/siteImages';
 
 const STORAGE_KEY = 'azora_offer_config';
 
-export const DEFAULT_OFFER_CONFIG = {
+/**
+ * Default Special Promotional Banners (exact format as the husband surprise card)
+ */
+export const DEFAULT_SPECIAL_OFFERS = [
+  {
+    id: 'sp-face-dtan',
+    category: 'Beauty',
+    pill: 'Special Festive Offer!',
+    tag: '100% Free D-Tan',
+    icon: 'gift',
+    title: 'Complimentary Face D-Tan on Us! ✨',
+    desc: 'Book any Facial or Cleanup treatment, and receive a FREE Face D-Tan treatment absolutely complimentary.',
+    quote: '“Double the festive radiance, zero extra charge!”',
+    btnText: 'Claim on WhatsApp',
+    whatsappMsg: 'Hi Azora Salon, I would like to book a Cleanup or Facial and claim the Free Face D-Tan offer!',
+    isActive: true,
+  },
+  {
+    id: 'sp-nail-art',
+    category: 'Nails',
+    pill: 'Festive Nail Bar Special!',
+    tag: 'Free Nail Art Included',
+    icon: 'sparkles',
+    title: 'Free 2-Finger Nail Art with Extensions! 💅',
+    desc: 'Get FREE 2-Finger Nail Art with Nail Extensions & Gel Extensions only. Plus Cat Eye Gel Polish included with any Nail Service.',
+    quote: '“Sparkle with customized festival nail artistry!”',
+    btnText: 'Claim on WhatsApp',
+    whatsappMsg: 'Hi Azora Salon, I would like to book Nail Extensions and claim the Free 2-Finger Nail Art!',
+    isActive: true,
+  },
+  {
+    id: 'sp-mani-pedi',
+    category: 'Nails',
+    pill: 'Hands & Feet Therapy!',
+    tag: 'Flat 10% OFF',
+    icon: 'crown',
+    title: 'Manicure from ₹599 & Flat 10% OFF Pedicures! 🌸',
+    desc: 'Pamper your hands and feet with luxury crystal exfoliation and deep hydration therapies.',
+    quote: '“Step into celebration season feeling relaxed and polished!”',
+    btnText: 'Claim on WhatsApp',
+    whatsappMsg: 'Hi Azora Salon, I would like to book a Pedicure with Flat 10% OFF!',
+    isActive: true,
+  },
+  {
+    id: 'sp-husband-dtan',
+    category: 'Grooming',
+    pill: 'Special Festive Surprise!',
+    tag: '100% Free Grooming',
+    icon: 'heart',
+    title: 'Ladies, Bring Your Husbands Along! 💖',
+    desc: 'If he is paying your festive bill, we’ll treat him to a FREE D-Tan Treatment on us!',
+    quote: '“Because his tan doesn’t deserve the spotlight on your special festive day!”',
+    btnText: 'Claim on WhatsApp',
+    whatsappMsg: 'Hi Azora Salon, I would like to book a festive appointment and claim the Free D-Tan for my husband!',
+    isActive: true,
+  },
+];
+
+/**
+ * Diwali Special Offers - extracted directly from the salon flyer template
+ */
+export const DIWALI_OFFER_CONFIG = {
+  version: 2,
   isActive: true,
-  title: 'Navratri Special Offers',
-  badge: 'Festive Celebration Deals',
-  desc: 'Look Good · Feel Good · Celebrate You! Exclusive festive beauty combos, hair rituals, and luxury grooming packages at special celebration rates.',
-  dateRange: '7th Oct – 25th Oct',
-  tags: ['On Any Facial — D-Tan FREE', 'Hygienic & Safe', 'Expert Stylists'],
+  title: 'Diwali Special Offers',
+  badge: 'Diwali SPECIAL OFFERS',
+  desc: 'Look Beautiful • Feel Confident • Celebrate Brightly! Exclusive festive beauty combos, waxing services, nail art extensions, and luxury grooming packages at celebration rates.',
+  dateRange: 'Diwali Festive Celebration',
+  tags: [
+    'FREE Face D-Tan with any Cleanup or Facial',
+    'FREE 2-Finger Nail Art with Extensions',
+    'Flat 10% OFF on any Pedicure',
+    'Cat Eye Gel Polish with any Nail Service',
+    'Hygienic & Sanitized Salon',
+    'Senior Stylist Preeti',
+  ],
   image: SITE_IMAGES.offers,
+  specialOffers: DEFAULT_SPECIAL_OFFERS,
   combos: [
+    // 1. BEAUTY COMBOS
     {
-      id: 'offer-garba-glow',
-      name: 'Garba Glow Combo',
+      id: 'offer-o3-facial-rica-wax',
+      name: '1. O3+ Facial + Rica Waxing Combo',
+      price: '₹2,199',
+      numericPrice: 2199,
+      category: 'Beauty',
+      desc: 'O3+ Facial + Face D-Tan + Full Hand Rica Wax + Underarm Wax',
+      badge: 'Festive Deal',
+    },
+    {
+      id: 'offer-o3-cleanup-normal-wax',
+      name: '2. O3+ Cleanup + Normal Waxing Combo',
+      price: '₹1,399',
+      numericPrice: 1399,
+      category: 'Beauty',
+      desc: 'O3+ Cleanup + Face D-Tan + Full Hand Wax + Half Leg Wax + Underarm Wax',
+      badge: 'Popular Combo',
+    },
+
+    // 2. WAXING SERVICES
+    {
+      id: 'offer-normal-waxing-combo',
+      name: 'Normal Waxing Combo',
+      price: '₹499',
+      numericPrice: 499,
+      category: 'Waxing',
+      desc: 'Full Hand Wax + Half Leg Wax + Underarm Wax + Eyebrows',
+      badge: 'Best Value',
+    },
+    {
+      id: 'offer-full-rica-wax-combo',
+      name: 'Full Rica Wax Combo',
       price: '₹699',
       numericPrice: 699,
-      category: 'Beauty',
-      desc: 'Cleanup + Full Hand Wax + Eyebrows + Upper Lip + Forehead',
+      category: 'Waxing',
+      desc: 'Full Hand Rica Wax + Half Leg Rica Wax + Underarm Wax + Eyebrows',
+      badge: 'Rica Special',
+    },
+
+    // 3. NAILS & PEDICURE
+    {
+      id: 'offer-hand-gel-polish',
+      name: 'Hand Gel Polish',
+      price: '₹399',
+      numericPrice: 399,
+      category: 'Nails',
+      desc: 'Hand Gel Polish Finishing with Cat Eye Gel Polish option',
     },
     {
-      id: 'offer-beauty-combo',
-      name: 'Navratri Beauty Combo',
-      price: '₹1,499',
-      numericPrice: 1499,
-      category: 'Beauty',
-      desc: 'Fruit Facial + Full Hand Wax + Half Leg Wax + Underarms',
+      id: 'offer-feet-gel-polish',
+      name: 'Feet Gel Polish',
+      price: '₹399',
+      numericPrice: 399,
+      category: 'Nails',
+      desc: 'Feet Gel Polish Finishing with Long-Lasting Shine',
     },
     {
-      id: 'offer-hydra-glow',
-      name: 'Navratri Hydra Glow',
-      price: '₹1,699',
-      numericPrice: 1699,
-      category: 'Beauty',
-      desc: 'Hydra Facial + D-Tan + Full Hand Wax + Half Leg Wax',
-    },
-    {
-      id: 'offer-dandiya-nails',
-      name: 'Dandiya Nails Special',
+      id: 'offer-hand-feet-combo',
+      name: 'Hand + Feet Gel Polish Combo',
       price: '₹699',
       numericPrice: 699,
       category: 'Nails',
-      desc: 'Gel Polish Hands + Gel Polish Feet + 2-Finger Nail Art',
+      desc: 'Hand Gel Polish + Feet Gel Polish (Cat Eye Included)',
+      badge: 'Combo Deal',
     },
     {
-      id: 'offer-hair-treatments',
-      name: 'Festive Hair Treatments',
-      price: 'From ₹499',
-      numericPrice: 499,
+      id: 'offer-nail-extensions',
+      name: 'Nail Extensions',
+      price: '₹1,299',
+      numericPrice: 1299,
+      category: 'Nails',
+      desc: 'Full Nail Extensions + FREE 2-Finger Nail Art included',
+      badge: 'FREE Nail Art',
+    },
+    {
+      id: 'offer-gel-extensions',
+      name: 'Gel Extensions',
+      price: '₹1,299',
+      numericPrice: 1299,
+      category: 'Nails',
+      desc: 'Full Gel Extensions + FREE 2-Finger Nail Art included',
+      badge: 'FREE Nail Art',
+    },
+
+    // 4. HAIR SPA COMBO
+    {
+      id: 'offer-hair-spa-combo',
+      name: 'Hair Spa Combo',
+      price: '₹999',
+      numericPrice: 999,
       category: 'Hair',
-      desc: 'Smoothening, Hair Botox, Global Color & Festive Makeovers',
+      desc: 'Hair Spa + Any Haircut + Hair Wash + Blow Dry',
+      badge: 'Hair Favorite',
+    },
+
+    // 5. HAIR TREATMENTS
+    {
+      id: 'offer-global-hair-colour',
+      name: '1. Global Hair Colour + Haircut',
+      price: '₹1,999',
+      numericPrice: 1999,
+      category: 'Hair',
+      desc: 'Global Hair Colour + Signature Haircut & Styling',
     },
     {
-      id: 'offer-mens-grooming',
-      name: 'Men’s Festive Grooming',
-      price: 'From ₹249',
-      numericPrice: 249,
+      id: 'offer-global-highlights',
+      name: '2. Global Highlights + Haircut',
+      price: '₹2,199',
+      numericPrice: 2199,
+      category: 'Hair',
+      desc: 'Global Multi-Dimensional Highlights + Haircut',
+    },
+    {
+      id: 'offer-hair-keratin',
+      name: '3. Hair Keratin + Haircut',
+      price: '₹2,499',
+      numericPrice: 2499,
+      category: 'Hair',
+      desc: 'Deep Keratin Protein Reconstruction + Haircut',
+      badge: 'Popular',
+    },
+    {
+      id: 'offer-hair-smoothing',
+      name: '4. Hair Smoothing',
+      price: '₹2,999',
+      numericPrice: 2999,
+      category: 'Hair',
+      desc: 'Professional Hair Smoothing Treatment for frizz-free silkiness',
+    },
+    {
+      id: 'offer-hair-botox',
+      name: '5. Hair Botox',
+      price: '₹3,499',
+      numericPrice: 3499,
+      category: 'Hair',
+      desc: 'Luxury Hair Botox Therapy for intense hydration and shine',
+      badge: 'Luxury',
+    },
+
+    // 6. MEN'S DIWALI GROOMING
+    {
+      id: 'offer-mens-grooming-combo',
+      name: 'Grooming Combo (Men)',
+      price: '₹299',
+      numericPrice: 299,
       category: 'Grooming',
-      desc: 'Haircut + Beard, Grooming Combos & Clean Up + D-Tan',
+      desc: 'Haircut + Beard Trim',
+    },
+    {
+      id: 'offer-mens-relaxation-combo',
+      name: 'Relaxation Combo (Men)',
+      price: '₹499',
+      numericPrice: 499,
+      category: 'Grooming',
+      desc: 'Hair Wash + Head Massage + Hair Setting',
+    },
+    {
+      id: 'offer-mens-grooming-plus',
+      name: 'Men’s Grooming Plus',
+      price: '₹699',
+      numericPrice: 699,
+      category: 'Grooming',
+      desc: 'Haircut + Beard + D-Tan Treatment',
+      badge: 'All-in-One',
     },
   ],
 };
+
+export const DEFAULT_OFFER_CONFIG = DIWALI_OFFER_CONFIG;
 
 function getWebhookUrl() {
   const url = import.meta.env.VITE_SPREADSHEET_WEBHOOK_URL;
@@ -73,12 +263,6 @@ function isWebhookConfigured(url) {
 
 /**
  * Resolves an offer image URL to ensure it renders reliably in both dev and production.
- * Handles:
- * 1. Missing / empty / undefined values -> defaults to SITE_IMAGES.offers
- * 2. Vite dev-only paths (e.g. '/src/assets/Images/navratri-offers.jpg') -> defaults to SITE_IMAGES.offers
- * 3. Filename references to default poster (e.g. 'navratri-offers.jpg') -> defaults to SITE_IMAGES.offers
- * 4. Google Drive URLs (drive.google.com/file/d/..., open?id=..., uc?id=...) -> converted to direct thumbnail URL
- * 5. Base64 data URIs and valid external URLs -> preserved
  */
 export function resolveOfferBannerImage(imageUrl) {
   if (!imageUrl || typeof imageUrl !== 'string') {
@@ -91,15 +275,25 @@ export function resolveOfferBannerImage(imageUrl) {
   if (
     !trimmed ||
     trimmed === 'DEFAULT' ||
+    trimmed === 'DIWALI_TEMPLATE' ||
     trimmed.startsWith('/src/') ||
     trimmed.startsWith('src/') ||
-    trimmed.includes('navratri-offers.jpg')
+    trimmed.includes('diwali-offers.jpg')
   ) {
     return SITE_IMAGES.offers;
   }
 
+  if (trimmed === 'NAVRATRI_TEMPLATE' || trimmed.includes('navratri-offers.jpg')) {
+    return SITE_IMAGES.offersNavratri || SITE_IMAGES.offers;
+  }
+
   // Base64 data URLs or production hashed asset URLs
   if (trimmed.startsWith('data:image/') || trimmed.startsWith('/assets/')) {
+    return trimmed;
+  }
+
+  // Direct public path
+  if (trimmed.startsWith('/images/')) {
     return trimmed;
   }
 
@@ -125,6 +319,23 @@ export function getOfferConfig() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_OFFER_CONFIG;
     const parsed = JSON.parse(raw);
+
+    // Auto-migrate if local storage still has old Navratri title
+    if (!parsed.version || parsed.version < 2) {
+      if (parsed.title === 'Navratri Special Offers') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_OFFER_CONFIG));
+        return DEFAULT_OFFER_CONFIG;
+      }
+    }
+
+    const specialOffers =
+      Array.isArray(parsed.specialOffers) && parsed.specialOffers.length > 0
+        ? parsed.specialOffers.map((sp) => ({
+            ...sp,
+            category: sp.category || (/husband|groom/i.test(sp.title + sp.desc) ? 'Grooming' : /nail|pedicure|manicure/i.test(sp.title + sp.desc) ? 'Nails' : /hair/i.test(sp.title + sp.desc) ? 'Hair' : 'Beauty'),
+          }))
+        : DEFAULT_SPECIAL_OFFERS;
+
     return {
       ...DEFAULT_OFFER_CONFIG,
       ...parsed,
@@ -133,6 +344,7 @@ export function getOfferConfig() {
         ? parsed.combos 
         : DEFAULT_OFFER_CONFIG.combos,
       tags: Array.isArray(parsed.tags) ? parsed.tags : DEFAULT_OFFER_CONFIG.tags,
+      specialOffers: specialOffers,
     };
   } catch (e) {
     console.error('Failed to parse offer config:', e);
@@ -160,6 +372,9 @@ export async function fetchOfferFromSpreadsheet() {
         image: resolveOfferBannerImage(data.image),
         combos: data.combos.length > 0 ? data.combos : DEFAULT_OFFER_CONFIG.combos,
         tags: Array.isArray(data.tags) ? data.tags : DEFAULT_OFFER_CONFIG.tags,
+        specialOffers: Array.isArray(data.specialOffers) && data.specialOffers.length > 0
+          ? data.specialOffers
+          : DEFAULT_OFFER_CONFIG.specialOffers,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
       window.dispatchEvent(new CustomEvent('azora-offer-updated', { detail: merged }));
@@ -195,12 +410,13 @@ export async function saveOfferToSpreadsheet(config, adminPin, base64Poster = nu
       }
     }
 
-    // Never save dev-only relative paths (like /src/assets/...) to Google Sheet
+    // Never save dev-only relative paths to Google Sheet
     let imageToSave = config.image || '';
     if (
       imageToSave === SITE_IMAGES.offers ||
       imageToSave.startsWith('/src/') ||
       imageToSave.startsWith('src/') ||
+      imageToSave.includes('diwali-offers.jpg') ||
       imageToSave.includes('navratri-offers.jpg')
     ) {
       imageToSave = '';
@@ -219,6 +435,7 @@ export async function saveOfferToSpreadsheet(config, adminPin, base64Poster = nu
       tags: Array.isArray(config.tags) ? config.tags : [],
       image: imageToSave,
       combos: Array.isArray(config.combos) ? config.combos : [],
+      specialOffers: Array.isArray(config.specialOffers) ? config.specialOffers : [],
       base64Poster: posterBase64 || undefined,
       mimeType: mimeType,
     };

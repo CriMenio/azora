@@ -214,7 +214,10 @@ function doPost(e) {
         }
 
         var tagsString = Array.isArray(data.tags) ? data.tags.join(", ") : (data.tags || "");
-        var combosJson = JSON.stringify(Array.isArray(data.combos) ? data.combos : []);
+        var combosPayload = (Array.isArray(data.highlightOffers) && data.highlightOffers.length > 0)
+          ? { combos: Array.isArray(data.combos) ? data.combos : [], highlightOffers: data.highlightOffers }
+          : (Array.isArray(data.combos) ? data.combos : []);
+        var combosJson = JSON.stringify(combosPayload);
         var combosSummary = Array.isArray(data.combos)
           ? data.combos.map(function(c, idx) {
               var line = (idx + 1) + ". " + (c.name || "Package") + " — " + (c.price || "") + (c.category ? " [" + c.category + "]" : "");
@@ -222,6 +225,13 @@ function doPost(e) {
               return line;
             }).join("\n\n")
           : "";
+
+        if (Array.isArray(data.highlightOffers) && data.highlightOffers.length > 0) {
+          combosSummary += "\n\n--- SPECIAL PROMOTIONAL HIGHLIGHTS ---\n" +
+            data.highlightOffers.map(function(h) {
+              return "★ " + (h.title || "") + " [" + (h.badge || "") + "]\n   " + (h.desc || "");
+            }).join("\n\n");
+        }
 
         var siteVisibility = (data.isActive !== false) ? "Visible" : "Hidden";
 
@@ -260,6 +270,7 @@ function doPost(e) {
             tags: Array.isArray(data.tags) ? data.tags : [],
             image: imageUrl,
             combos: Array.isArray(data.combos) ? data.combos : [],
+            highlightOffers: Array.isArray(data.highlightOffers) ? data.highlightOffers : [],
             updatedAt: timestamp.toISOString()
           }
         });
@@ -935,9 +946,16 @@ function getLatestOfferConfig(ss) {
 
     var rawJson = getColValue(["Packages Raw JSON", "Combos JSON", "Packages JSON"], 9);
     var combos = [];
+    var highlightOffers = [];
     if (rawJson) {
       try {
-        combos = JSON.parse(rawJson);
+        var parsedJson = JSON.parse(rawJson);
+        if (Array.isArray(parsedJson)) {
+          combos = parsedJson;
+        } else if (parsedJson && typeof parsedJson === "object") {
+          combos = Array.isArray(parsedJson.combos) ? parsedJson.combos : [];
+          highlightOffers = Array.isArray(parsedJson.highlightOffers) ? parsedJson.highlightOffers : [];
+        }
       } catch (e) {
         combos = [];
       }
@@ -952,6 +970,7 @@ function getLatestOfferConfig(ss) {
       tags: tags,
       image: posterUrl,
       combos: combos,
+      highlightOffers: highlightOffers,
       updatedAt: lastRow[0] ? String(lastRow[0]) : ""
     };
   } catch (err) {

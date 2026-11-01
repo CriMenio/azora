@@ -7,10 +7,14 @@ import imgNailArt from './Images/Nail6.jpeg';
 import imgCatEyeNails from './Images/Nail3.jpeg';
 import imgGoldLineNails from './Images/Nail2.jpeg';
 import imgDualToneNails from './Images/Nail1.jpeg';
-import imgOffers from './Images/navratri-offers.jpg';
+import imgOffers from './Images/diwali-offers.jpg';
+import imgDiwaliOffers from './Images/diwali-offers.jpg';
+import imgNavratriOffers from './Images/navratri-offers.jpg';
 
 export const SITE_IMAGES = {
   offers: imgOffers,
+  offersDiwali: imgDiwaliOffers,
+  offersNavratri: imgNavratriOffers,
   featured: {
     hairColor: imgHairColor,
     frenchManicure: imgFrenchManicure,

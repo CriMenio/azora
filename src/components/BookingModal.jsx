@@ -82,7 +82,7 @@ export default function BookingModal({ isOpen, onClose, initialServiceId, initia
 
     if (validServiceId) {
       setFormData(prev => ({ ...prev, serviceIds: [validServiceId] }));
-      const startStep = validStep === 2 || validServiceId.startsWith('offer-') ? 2 : 1;
+      const startStep = validStep === 2 || validServiceId.startsWith('offer-') || validServiceId.startsWith('combo-') ? 2 : 1;
       setStep(startStep);
       setBookingNo('');
     } else {
