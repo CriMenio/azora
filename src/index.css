@@ -7056,11 +7056,18 @@ select.form-control option {
   min-width: 220px;
 }
 
-/* 2-Column Form Row */
+/* 2-Column Form Row (Desktop/Tablet) */
 .admin-form-row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .admin-form-row-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem;
+  }
 }
 
 /* Form Controls in Light Mode Refinement */
@@ -8244,6 +8251,60 @@ select.form-control option {
   color: #ef4444 !important;
 }
 
+/* Sorting Controls */
+.admin-customers-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.admin-customers-sort-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-customers-sort-select {
+  height: 34px;
+  border-radius: 8px;
+  padding: 0 1.9rem 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--color-bg);
+  border: 1px solid var(--color-gold-border);
+  color: var(--color-text);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-position: right 0.6rem center;
+  background-repeat: no-repeat;
+  background-size: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  transition: all 0.15s ease;
+}
+
+.admin-customers-sort-select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+.admin-sort-caret {
+  display: inline-block;
+  font-size: 0.7rem;
+  opacity: 0.45;
+  transition: all 0.15s ease;
+}
+
+.admin-sort-caret.active {
+  opacity: 1;
+}
+
 /* Customer Table Styles */
 .admin-cust-table-card {
   width: 100%;
@@ -9113,22 +9174,120 @@ select.form-control option {
   }
 }
 
-@media (max-width: 600px) {
-  .admin-customers-stats-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  /* Customer CRM Header Banner & Stacked Action Buttons */
+  .admin-customers-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem 1.25rem;
+    gap: 1.25rem;
   }
 
+  .admin-customers-title {
+    font-size: 1.45rem;
+  }
+
+  .admin-customers-header-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .admin-customers-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.8rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Form Inputs Stack Vertically (Align Below on Mobile) */
+  .admin-form-row-2 {
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem;
+  }
+
+  /* Stats Grid */
+  .admin-customers-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  /* Toolbar: Search, Filters & Sort Dropdown */
   .admin-customers-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.85rem;
+    padding: 1rem 1.15rem;
   }
 
   .admin-customers-search-wrap {
     max-width: 100%;
+    width: 100%;
+  }
+
+  .admin-customers-toolbar-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .admin-customers-filter-pills {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-customers-sort-wrap {
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .admin-customers-sort-select {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Add/Edit Modal Dialog & Mobile Full-Width Buttons */
+  .admin-modal-overlay {
+    padding: 0.75rem;
   }
 
   .admin-modal-card {
-    padding: 1.5rem;
+    padding: 1.35rem 1.1rem;
+    border-radius: 12px;
+    max-height: 92vh;
+    width: 100%;
+  }
+
+  .admin-modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .admin-modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Dossier View Modal Actions */
+  .cust-dossier-footer {
+    flex-direction: column-reverse;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .cust-dossier-footer .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
   }
 }
 

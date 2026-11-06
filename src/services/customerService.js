@@ -363,13 +363,100 @@ export async function syncCustomersWithSheet(adminPin) {
 
 
 /**
- * Searches and filters customers by query across name, phone, address, service, or remarks.
+ * Parses a date string into a midnight timestamp for reliable day-level comparisons.
  */
-export function filterCustomers(customers, query, filterCategory = 'all') {
+export function parseDateDayTimestamp(dateStr) {
+  if (!dateStr) return 0;
+  const s = String(dateStr).trim();
+  const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10)).getTime();
+  }
+  const dmyMatch = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (dmyMatch) {
+    return new Date(parseInt(dmyMatch[3], 10), parseInt(dmyMatch[2], 10) - 1, parseInt(dmyMatch[1], 10)).getTime();
+  }
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  }
+  return 0;
+}
+
+/**
+ * Parses a time string (e.g. '10:30 AM', '02:00 PM', '14:30') into minutes from midnight (0 to 1439).
+ */
+export function parseTimeMinutes(timeStr) {
+  if (!timeStr) return 9999;
+  const s = String(timeStr).trim();
+  const m12 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m12) {
+    let h = parseInt(m12[1], 10);
+    const m = parseInt(m12[2], 10);
+    const isPM = m12[3].toUpperCase() === 'PM';
+    if (isPM && h < 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+    return h * 60 + m;
+  }
+  const m24 = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (m24) {
+    return parseInt(m24[1], 10) * 60 + parseInt(m24[2], 10);
+  }
+  const mDate = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+  if (mDate) {
+    return parseInt(mDate[1], 10) * 60 + parseInt(mDate[2], 10);
+  }
+  return 9999;
+}
+
+/**
+ * Sorts customer records by Visit Date & Time (newest date on top by default, morning-to-night inside the day).
+ */
+export function sortCustomersByDateTime(customers, sortOrder = 'visit_desc') {
+  if (!Array.isArray(customers)) return [];
+  return [...customers].sort((a, b) => {
+    const timeA = a.visitTime || a.time || '';
+    const timeB = b.visitTime || b.time || '';
+    const dateA = parseDateDayTimestamp(a.visitDate);
+    const dateB = parseDateDayTimestamp(b.visitDate);
+
+    if (sortOrder === 'visit_desc') {
+      // Newest visit date on top
+      if (dateB !== dateA) return dateB - dateA;
+      // Inside same date: morning to night (e.g. 09:00 AM before 07:00 PM)
+      return parseTimeMinutes(timeA) - parseTimeMinutes(timeB);
+    } else if (sortOrder === 'visit_asc') {
+      // Oldest visit date on top
+      if (dateA !== dateB) return dateA - dateB;
+      return parseTimeMinutes(timeA) - parseTimeMinutes(timeB);
+    } else if (sortOrder === 'time_asc') {
+      // Morning to night across all records
+      const minA = parseTimeMinutes(timeA);
+      const minB = parseTimeMinutes(timeB);
+      if (minA !== minB) return minA - minB;
+      return dateB - dateA;
+    } else if (sortOrder === 'time_desc') {
+      // Night to morning across all records
+      const minA = parseTimeMinutes(timeA);
+      const minB = parseTimeMinutes(timeB);
+      if (minB !== minA) return minB - minA;
+      return dateB - dateA;
+    } else if (sortOrder === 'name_asc') {
+      return String(a.fullName || '').localeCompare(String(b.fullName || ''));
+    }
+    return 0;
+  });
+}
+
+/**
+ * Searches and filters customers by query across name, phone, address, service, or remarks.
+ * Automatically sorts by Visit Date & Time (newest on top) by default.
+ */
+export function filterCustomers(customers, query, filterCategory = 'all', sortOrder = 'visit_desc') {
   if (!Array.isArray(customers)) return [];
   const q = String(query || '').toLowerCase().trim();
 
-  return customers.filter((c) => {
+  const filtered = customers.filter((c) => {
     // Category filter
     if (filterCategory === 'done' && (c.status || 'Done') !== 'Done') return false;
     if (filterCategory === 'pending' && c.status !== 'Pending') return false;
@@ -394,4 +481,6 @@ export function filterCustomers(customers, query, filterCategory = 'all') {
       (c.feedback && c.feedback.toLowerCase().includes(q))
     );
   });
+
+  return sortCustomersByDateTime(filtered, sortOrder);
 }

@@ -67,6 +67,42 @@ const QUICK_SERVICE_TAGS = [
   'Men’s Grooming',
 ];
 
+export const VISIT_TIME_SLOTS = [
+  '08:00 AM',
+  '08:30 AM',
+  '09:00 AM',
+  '09:30 AM',
+  '10:00 AM',
+  '10:30 AM',
+  '11:00 AM',
+  '11:30 AM',
+  '12:00 PM',
+  '12:30 PM',
+  '01:00 PM',
+  '01:30 PM',
+  '02:00 PM',
+  '02:30 PM',
+  '03:00 PM',
+  '03:30 PM',
+  '04:00 PM',
+  '04:30 PM',
+  '05:00 PM',
+  '05:30 PM',
+  '06:00 PM',
+  '06:30 PM',
+  '07:00 PM',
+  '07:30 PM',
+  '08:00 PM',
+  '08:30 PM',
+  '09:00 PM',
+  '09:30 PM',
+  '10:00 PM',
+  '10:30 PM',
+  '11:00 PM',
+  '11:30 PM',
+  '12:00 AM',
+];
+
 export default function AdminCustomers({ adminPin }) {
   const [customers, setCustomers] = useState(getCustomers);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,6 +115,7 @@ export default function AdminCustomers({ adminPin }) {
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [customTimeMode, setCustomTimeMode] = useState(false);
 
   // Form Data State
   const [formData, setFormData] = useState({
@@ -115,10 +152,12 @@ export default function AdminCustomers({ adminPin }) {
     return () => window.removeEventListener('azora-customers-updated', handleUpdate);
   }, []);
 
-  // Filtered customer list
+  const [sortOrder, setSortOrder] = useState('visit_desc');
+
+  // Filtered customer list (Visit Date & Time on top by default)
   const filteredList = useMemo(() => {
-    return filterCustomers(customers, searchQuery, filterCategory);
-  }, [customers, searchQuery, filterCategory]);
+    return filterCustomers(customers, searchQuery, filterCategory, sortOrder);
+  }, [customers, searchQuery, filterCategory, sortOrder]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -134,6 +173,7 @@ export default function AdminCustomers({ adminPin }) {
 
   const openAddModal = () => {
     setEditingCustomer(null);
+    setCustomTimeMode(false);
     setFormData({
       fullName: '',
       phone: '',
@@ -157,6 +197,8 @@ export default function AdminCustomers({ adminPin }) {
 
   const openEditModal = (customer) => {
     setEditingCustomer(customer);
+    const existingTime = formatVisitTime(customer.visitTime || customer.time || '');
+    setCustomTimeMode(Boolean(existingTime && !VISIT_TIME_SLOTS.includes(existingTime)));
     setFormData({
       fullName: customer.fullName || '',
       phone: customer.phone || '',
@@ -167,7 +209,7 @@ export default function AdminCustomers({ adminPin }) {
       status: customer.status || 'Done',
       reference: customer.reference || 'Instagram / Social Media',
       visitDate: customer.visitDate ? String(customer.visitDate).split('T')[0] : new Date().toISOString().split('T')[0],
-      visitTime: customer.visitTime || customer.time || '',
+      visitTime: existingTime,
       rating: customer.rating || 5,
       feedback: customer.feedback || '',
       remarks: customer.remarks || '',
@@ -488,6 +530,24 @@ export default function AdminCustomers({ adminPin }) {
               📸 Photos
             </button>
           </div>
+
+          <div className="admin-customers-sort-wrap">
+            <label className="admin-customers-sort-label">
+              <Clock size={13} className="text-gold" /> Sort:
+            </label>
+            <select
+              className="admin-customers-sort-select"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              title="Change customer list order"
+            >
+              <option value="visit_desc">📅 Visit Date &amp; Time (Newest on top)</option>
+              <option value="visit_asc">📅 Visit Date &amp; Time (Oldest first)</option>
+              <option value="time_asc">⏰ Time (Morning to Night)</option>
+              <option value="time_desc">⏰ Time (Night to Morning)</option>
+              <option value="name_asc">👤 Customer Name (A to Z)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -511,8 +571,30 @@ export default function AdminCustomers({ adminPin }) {
                   <th style={{ width: '13%' }}>Phone No</th>
                   <th style={{ width: '20%' }}>Service</th>
                   <th style={{ width: '11%' }}>Amount</th>
-                  <th style={{ width: '12%' }}>Visit Date</th>
-                  <th style={{ width: '10%' }}>Time</th>
+                  <th
+                    style={{ width: '12%', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => setSortOrder(sortOrder === 'visit_desc' ? 'visit_asc' : 'visit_desc')}
+                    title="Click to toggle sorting by Visit Date (Newest / Oldest)"
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      Visit Date
+                      <span className={`admin-sort-caret ${sortOrder.startsWith('visit_') ? 'active text-gold' : ''}`}>
+                        {sortOrder === 'visit_desc' ? '▼' : sortOrder === 'visit_asc' ? '▲' : '↕'}
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '10%', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => setSortOrder(sortOrder === 'time_asc' ? 'time_desc' : 'time_asc')}
+                    title="Click to toggle sorting by Time (Morning to Night / Night to Morning)"
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      Time
+                      <span className={`admin-sort-caret ${sortOrder.startsWith('time_') ? 'active text-gold' : ''}`}>
+                        {sortOrder === 'time_asc' ? '▲' : sortOrder === 'time_desc' ? '▼' : '↕'}
+                      </span>
+                    </span>
+                  </th>
                   <th style={{ width: '8%' }}>Status</th>
                   <th style={{ width: '8%', textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -832,30 +914,66 @@ export default function AdminCustomers({ adminPin }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Visit Time / Slot</label>
-                  <input
-                    type="text"
-                    list="azora-visit-time-slots"
-                    className="form-control"
-                    placeholder="e.g. 11:30 AM or 04:00 PM"
-                    value={formData.visitTime}
-                    onChange={(e) => setFormData({ ...formData, visitTime: e.target.value })}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Visit Time / Slot</label>
+                    <button
+                      type="button"
+                      onClick={() => setCustomTimeMode(!customTimeMode)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--color-primary)',
+                        fontSize: '0.74rem',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                      title={customTimeMode ? 'Switch to standard 30-min slots' : 'Type custom time format'}
+                    >
+                      {customTimeMode ? 'Pick from 30-min slots' : 'Type custom time'}
+                    </button>
+                  </div>
+
+                  {customTimeMode ? (
+                    <input
+                      type="text"
+                      list="azora-visit-time-slots"
+                      className="form-control"
+                      placeholder="e.g. 08:00 AM, 11:30 AM or 11:45 PM"
+                      value={formData.visitTime}
+                      onChange={(e) => setFormData({ ...formData, visitTime: e.target.value })}
+                    />
+                  ) : (
+                    <select
+                      className="form-control"
+                      value={formData.visitTime || ''}
+                      onChange={(e) => {
+                        if (e.target.value === '__custom__') {
+                          setCustomTimeMode(true);
+                        } else {
+                          setFormData({ ...formData, visitTime: e.target.value });
+                        }
+                      }}
+                    >
+                      <option value="">Select Visit Time Slot (08:00 AM – 12:00 AM)...</option>
+                      {VISIT_TIME_SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                      {formData.visitTime && !VISIT_TIME_SLOTS.includes(formData.visitTime) && (
+                        <option value={formData.visitTime}>
+                          {formData.visitTime} (Current)
+                        </option>
+                      )}
+                      <option value="__custom__">✏️ Type Custom Time...</option>
+                    </select>
+                  )}
+
                   <datalist id="azora-visit-time-slots">
-                    <option value="10:00 AM" />
-                    <option value="10:30 AM" />
-                    <option value="11:00 AM" />
-                    <option value="11:30 AM" />
-                    <option value="12:00 PM" />
-                    <option value="12:30 PM" />
-                    <option value="01:00 PM" />
-                    <option value="02:00 PM" />
-                    <option value="03:00 PM" />
-                    <option value="04:00 PM" />
-                    <option value="05:00 PM" />
-                    <option value="06:00 PM" />
-                    <option value="07:00 PM" />
-                    <option value="08:00 PM" />
+                    {VISIT_TIME_SLOTS.map((slot) => (
+                      <option key={slot} value={slot} />
+                    ))}
                   </datalist>
                 </div>
               </div>
