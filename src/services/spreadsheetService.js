@@ -237,6 +237,7 @@ export async function saveCustomerToSpreadsheet(customer, adminPin) {
     email: customer.email || '',
     address: customer.address || '',
     service: customer.service || '',
+    amount: customer.amount || '',
     reference: customer.reference || '',
     visitDate: customer.visitDate || '',
     rating: customer.rating != null ? customer.rating : 5,

@@ -15,6 +15,7 @@ export const INITIAL_CUSTOMERS = [
     email: 'ananya.mehta@example.com',
     address: 'Flat 402, Skyline Residency, Sector 8, Kamothe',
     service: 'Bridal Makeover Suite & Hydra Glow Facial',
+    amount: '4,500',
     reference: 'Instagram',
     visitDate: '2026-10-18',
     rating: 5,
@@ -31,6 +32,7 @@ export const INITIAL_CUSTOMERS = [
     email: '',
     address: 'Plot 12, Sector 19, Kamothe, Navi Mumbai',
     service: 'Navratri Beauty Combo & Cat-Eye Gel Nails',
+    amount: '1,899',
     reference: 'Friend / Family Referral',
     visitDate: '2026-10-20',
     rating: 5,
@@ -47,6 +49,7 @@ export const INITIAL_CUSTOMERS = [
     email: 'rahul.patel@workmail.com',
     address: 'Gharonda Complex, Sector 9, Kamothe',
     service: 'Men’s Scissor Haircut & D-Tan Clean-Up',
+    amount: '699',
     reference: 'Google Search / Maps',
     visitDate: '2026-10-21',
     rating: 5,
@@ -109,7 +112,24 @@ export function getCustomers() {
       return INITIAL_CUSTOMERS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : INITIAL_CUSTOMERS;
+    if (Array.isArray(parsed)) {
+      let updated = false;
+      const enriched = parsed.map((c) => {
+        if (!c.amount) {
+          const match = INITIAL_CUSTOMERS.find((init) => init.id === c.id);
+          if (match && match.amount) {
+            updated = true;
+            return { ...c, amount: match.amount };
+          }
+        }
+        return c;
+      });
+      if (updated) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(enriched));
+      }
+      return enriched;
+    }
+    return INITIAL_CUSTOMERS;
   } catch (err) {
     console.error('Failed to parse customers from storage:', err);
     return INITIAL_CUSTOMERS;
@@ -260,6 +280,7 @@ export function filterCustomers(customers, query, filterCategory = 'all') {
       (c.phone && c.phone.includes(q)) ||
       (c.address && c.address.toLowerCase().includes(q)) ||
       (c.service && c.service.toLowerCase().includes(q)) ||
+      (c.amount && String(c.amount).toLowerCase().includes(q)) ||
       (c.reference && c.reference.toLowerCase().includes(q)) ||
       (c.remarks && c.remarks.toLowerCase().includes(q)) ||
       (c.feedback && c.feedback.toLowerCase().includes(q))

@@ -355,7 +355,8 @@ function doPost(e) {
           data.remarks || "",
           photosCount,
           photosString,
-          timestamp.toISOString()
+          timestamp.toISOString(),
+          data.amount || ""
         ];
 
         if (existingRowIndex !== -1) {
@@ -374,6 +375,7 @@ function doPost(e) {
             email: data.email || "",
             address: data.address || "",
             service: data.service || "",
+            amount: data.amount || "",
             reference: data.reference || "",
             visitDate: data.visitDate || "",
             rating: data.rating != null ? data.rating : 5,
@@ -701,7 +703,8 @@ function getAdminRecords() {
       photosCount: parseInt(row[12], 10) || 0,
       photoUrls: rawUrls,
       images: images,
-      updatedAt: formatSheetDate(row[14])
+      updatedAt: formatSheetDate(row[14]),
+      amount: row[15] != null ? String(row[15]) : ""
     };
   });
 
@@ -725,7 +728,8 @@ function getAdminRecords() {
         photosCount: parseInt(row[12], 10) || 0,
         photoUrls: rawUrls,
         images: images,
-        updatedAt: formatSheetDate(row[14])
+        updatedAt: formatSheetDate(row[14]),
+        amount: row[15] != null ? String(row[15]) : ""
       };
     });
   }
@@ -1202,7 +1206,8 @@ function getOrCreateCustomersSheet(ss) {
     "Stylist Remarks",
     "Photos Count",
     "Photo URLs",
-    "Updated At"
+    "Updated At",
+    "Amount (₹)"
   ];
 
   if (!sheet) {
@@ -1220,6 +1225,16 @@ function getOrCreateCustomersSheet(ss) {
     sheet.setColumnWidth(8, 160); // Reference
     sheet.setColumnWidth(11, 260); // Feedback
     sheet.setColumnWidth(12, 260); // Stylist Remarks
+    sheet.setColumnWidth(16, 120); // Amount (₹)
+  } else {
+    // If sheet exists, ensure Amount (₹) header exists
+    var lastCol = Math.max(sheet.getLastColumn(), 1);
+    var curHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var hasAmount = curHeaders.some(function(h) { return /amount|bill/i.test(String(h)); });
+    if (!hasAmount && curHeaders.length >= 14) {
+      sheet.getRange(1, curHeaders.length + 1).setValue("Amount (₹)").setFontWeight("bold");
+      sheet.setColumnWidth(curHeaders.length + 1, 120);
+    }
   }
   return sheet;
 }

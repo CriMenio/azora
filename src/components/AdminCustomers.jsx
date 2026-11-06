@@ -28,6 +28,7 @@ import {
   Sparkles,
   RefreshCw,
   Eye,
+  IndianRupee,
 } from 'lucide-react';
 import {
   getCustomers,
@@ -81,6 +82,7 @@ export default function AdminCustomers({ adminPin }) {
     email: '',
     address: '',
     service: '',
+    amount: '',
     reference: 'Instagram / Social Media',
     visitDate: new Date().toISOString().split('T')[0],
     rating: 5,
@@ -128,6 +130,7 @@ export default function AdminCustomers({ adminPin }) {
       email: '',
       address: '',
       service: '',
+      amount: '',
       reference: 'Instagram / Social Media',
       visitDate: new Date().toISOString().split('T')[0],
       rating: 5,
@@ -148,6 +151,7 @@ export default function AdminCustomers({ adminPin }) {
       email: customer.email || '',
       address: customer.address || '',
       service: customer.service || '',
+      amount: customer.amount || '',
       reference: customer.reference || 'Instagram / Social Media',
       visitDate: customer.visitDate || new Date().toISOString().split('T')[0],
       rating: customer.rating || 5,
@@ -220,6 +224,7 @@ export default function AdminCustomers({ adminPin }) {
       email: formData.email.trim(),
       address: formData.address.trim(),
       service: formData.service.trim(),
+      amount: formData.amount ? formData.amount.trim() : '',
       reference: formData.reference,
       visitDate: formData.visitDate,
       rating: Number(formData.rating) || 5,
@@ -516,6 +521,11 @@ export default function AdminCustomers({ adminPin }) {
                   <span className="admin-cust-badge admin-cust-badge--service">
                     <Sparkles size={13} /> {client.service || 'General Service'}
                   </span>
+                  {client.amount && (
+                    <span className="admin-cust-badge admin-cust-badge--amount">
+                      <IndianRupee size={12} /> {String(client.amount).replace(/^₹\s*/, '')}
+                    </span>
+                  )}
                   {client.reference && (
                     <span className="admin-cust-badge admin-cust-badge--ref">
                       <Tag size={13} /> Ref: {client.reference}
@@ -709,6 +719,26 @@ export default function AdminCustomers({ adminPin }) {
                 </div>
               </div>
 
+              {/* Service Amount / Bill Total */}
+              <div className="admin-form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Service Amount / Bill Total (₹)</label>
+                  <div className="admin-amount-input-wrap">
+                    <span className="admin-amount-currency-prefix">₹</span>
+                    <input
+                      type="text"
+                      className="form-control admin-amount-input"
+                      placeholder="e.g. 2,199 or 1,500"
+                      value={formData.amount}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/^₹\s*/, '');
+                        setFormData({ ...formData, amount: cleaned });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Row 4: Reference Source & Visit Date */}
               <div className="admin-form-row-2">
                 <div className="form-group">
@@ -892,6 +922,11 @@ export default function AdminCustomers({ adminPin }) {
                 <h3 className="cust-dossier-name">{viewingCustomer.fullName}</h3>
                 <p className="cust-dossier-subtitle">
                   Primary Treatment: <strong className="text-gold">{viewingCustomer.service || 'General Salon Care'}</strong>
+                  {viewingCustomer.amount && (
+                    <span className="cust-dossier-amount-pill">
+                      <IndianRupee size={12} /> {String(viewingCustomer.amount).replace(/^₹\s*/, '')}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -942,6 +977,16 @@ export default function AdminCustomers({ adminPin }) {
                     <a href={`mailto:${viewingCustomer.email}`} className="info-card-sub text-gold">
                       Send Email
                     </a>
+                  </div>
+                )}
+
+                {viewingCustomer.amount && (
+                  <div className="cust-dossier-info-card">
+                    <span className="info-card-label"><IndianRupee size={13} /> Billed Amount</span>
+                    <strong className="info-card-val text-gold">
+                      ₹{String(viewingCustomer.amount).replace(/^₹\s*/, '')}
+                    </strong>
+                    <span className="info-card-sub">Service bill recorded</span>
                   </div>
                 )}
               </div>
@@ -1056,9 +1101,12 @@ export default function AdminCustomers({ adminPin }) {
           customerToDelete
             ? [
                 { label: 'Services Availed', value: customerToDelete.service },
+                customerToDelete.amount
+                  ? { label: 'Billed Amount', value: `₹${String(customerToDelete.amount).replace(/^₹\s*/, '')}` }
+                  : null,
                 { label: 'Contact Phone', value: customerToDelete.phone },
                 { label: 'Address / Area', value: customerToDelete.address },
-              ].filter((d) => d.value)
+              ].filter((d) => d && d.value)
             : []
         }
       />

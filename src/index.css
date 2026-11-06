@@ -8177,6 +8177,13 @@ select.form-control option {
   border: 1px solid var(--color-border);
 }
 
+.admin-cust-badge--amount {
+  background: rgba(212, 175, 55, 0.16);
+  color: var(--color-primary);
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  font-weight: 600;
+}
+
 .admin-cust-badge--date {
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text-muted);
@@ -8510,6 +8517,44 @@ select.form-control option {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background: rgba(212, 175, 55, 0.08);
+}
+
+/* Service Amount Field */
+.admin-amount-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-amount-currency-prefix {
+  position: absolute;
+  left: 0.95rem;
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+.admin-amount-input {
+  padding-left: 2.1rem !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.cust-dossier-amount-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.65rem;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 .admin-modal-footer {
