@@ -29,6 +29,9 @@ import {
   RefreshCw,
   Eye,
   IndianRupee,
+  Table as TableIcon,
+  LayoutGrid,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   getCustomers,
@@ -36,6 +39,8 @@ import {
   deleteCustomer,
   compressCustomerImage,
   filterCustomers,
+  formatVisitDate,
+  formatVisitTime,
   syncCustomersWithSheet,
 } from '../services/customerService';
 import { SERVICES_CATALOG } from '../data/servicesCatalog';
@@ -83,8 +88,10 @@ export default function AdminCustomers({ adminPin }) {
     address: '',
     service: '',
     amount: '',
+    status: 'Done',
     reference: 'Instagram / Social Media',
     visitDate: new Date().toISOString().split('T')[0],
+    visitTime: '',
     rating: 5,
     feedback: '',
     remarks: '',
@@ -116,10 +123,13 @@ export default function AdminCustomers({ adminPin }) {
   // Statistics
   const stats = useMemo(() => {
     const total = customers.length;
+    const doneCount = customers.filter((c) => (c.status || 'Done') === 'Done').length;
+    const pendingCount = customers.filter((c) => c.status === 'Pending').length;
+    const cancelCount = customers.filter((c) => c.status === 'Cancel').length;
     const withFeedback = customers.filter((c) => c.feedback && c.feedback.trim()).length;
     const fiveStars = customers.filter((c) => c.rating === 5).length;
     const totalPhotos = customers.reduce((acc, c) => acc + (Array.isArray(c.images) ? c.images.length : 0), 0);
-    return { total, withFeedback, fiveStars, totalPhotos };
+    return { total, doneCount, pendingCount, cancelCount, withFeedback, fiveStars, totalPhotos };
   }, [customers]);
 
   const openAddModal = () => {
@@ -131,8 +141,10 @@ export default function AdminCustomers({ adminPin }) {
       address: '',
       service: '',
       amount: '',
+      status: 'Done',
       reference: 'Instagram / Social Media',
       visitDate: new Date().toISOString().split('T')[0],
+      visitTime: '',
       rating: 5,
       feedback: '',
       remarks: '',
@@ -152,8 +164,10 @@ export default function AdminCustomers({ adminPin }) {
       address: customer.address || '',
       service: customer.service || '',
       amount: customer.amount || '',
+      status: customer.status || 'Done',
       reference: customer.reference || 'Instagram / Social Media',
-      visitDate: customer.visitDate || new Date().toISOString().split('T')[0],
+      visitDate: customer.visitDate ? String(customer.visitDate).split('T')[0] : new Date().toISOString().split('T')[0],
+      visitTime: customer.visitTime || customer.time || '',
       rating: customer.rating || 5,
       feedback: customer.feedback || '',
       remarks: customer.remarks || '',
@@ -162,6 +176,16 @@ export default function AdminCustomers({ adminPin }) {
     setFormErrors({});
     setImageError('');
     setIsFormOpen(true);
+  };
+
+  const handleQuickStatusChange = async (client, newStatus) => {
+    if (!newStatus || client.status === newStatus) return;
+    const updated = { ...client, status: newStatus };
+    const res = await saveCustomer(updated, adminPin);
+    if (res.success) {
+      setFeedbackSuccess(`Status updated to "${newStatus}" for ${client.fullName}`);
+      setTimeout(() => setFeedbackSuccess(''), 3000);
+    }
   };
 
   const closeModal = () => {
@@ -225,8 +249,10 @@ export default function AdminCustomers({ adminPin }) {
       address: formData.address.trim(),
       service: formData.service.trim(),
       amount: formData.amount ? formData.amount.trim() : '',
+      status: formData.status || 'Done',
       reference: formData.reference,
       visitDate: formData.visitDate,
+      visitTime: (formData.visitTime || '').trim(),
       rating: Number(formData.rating) || 5,
       feedback: formData.feedback.trim(),
       remarks: formData.remarks.trim(),
@@ -290,8 +316,11 @@ export default function AdminCustomers({ adminPin }) {
       'Email',
       'Address',
       'Services',
+      'Amount',
+      'Status',
       'Reference',
       'Visit Date',
+      'Visit Time',
       'Rating',
       'Customer Feedback',
       'Stylist Remarks',
@@ -305,8 +334,11 @@ export default function AdminCustomers({ adminPin }) {
       `"${(c.email || '').replace(/"/g, '""')}"`,
       `"${(c.address || '').replace(/"/g, '""')}"`,
       `"${(c.service || '').replace(/"/g, '""')}"`,
+      `"${(c.amount || '').replace(/"/g, '""')}"`,
+      `"${(c.status || 'Done').replace(/"/g, '""')}"`,
       `"${(c.reference || '').replace(/"/g, '""')}"`,
       c.visitDate || '',
+      `"${(c.visitTime || c.time || '').replace(/"/g, '""')}"`,
       c.rating || 5,
       `"${(c.feedback || '').replace(/"/g, '""')}"`,
       `"${(c.remarks || '').replace(/"/g, '""')}"`,
@@ -370,30 +402,30 @@ export default function AdminCustomers({ adminPin }) {
           <span className="stat-sub">Active in salon directory</span>
         </div>
         <div className="admin-customer-stat-card glass-panel">
+          <span className="stat-label">Done (Completed)</span>
+          <strong className="stat-val" style={{ color: '#10b981' }}>{stats.doneCount}</strong>
+          <span className="stat-sub">Services served &amp; finished</span>
+        </div>
+        <div className="admin-customer-stat-card glass-panel">
+          <span className="stat-label">Pending / Scheduled</span>
+          <strong className="stat-val" style={{ color: '#f59e0b' }}>{stats.pendingCount}</strong>
+          <span className="stat-sub">Upcoming &amp; in-progress</span>
+        </div>
+        <div className="admin-customer-stat-card glass-panel">
           <span className="stat-label">5-Star Praises</span>
-          <strong className="stat-val">{stats.fiveStars}</strong>
-          <span className="stat-sub">Top satisfied clients</span>
-        </div>
-        <div className="admin-customer-stat-card glass-panel">
-          <span className="stat-label">Reviews Recorded</span>
-          <strong className="stat-val">{stats.withFeedback}</strong>
-          <span className="stat-sub">Quotes &amp; testimonies</span>
-        </div>
-        <div className="admin-customer-stat-card glass-panel">
-          <span className="stat-label">Makeover Photos</span>
-          <strong className="stat-val text-gold">{stats.totalPhotos}</strong>
-          <span className="stat-sub">Saved client pictures</span>
+          <strong className="stat-val text-gold">{stats.fiveStars}</strong>
+          <span className="stat-sub">Top rated client visits</span>
         </div>
       </div>
 
-      {/* Toolbar: Search & Filters */}
+      {/* Toolbar: Search, Filters & View Toggle */}
       <div className="admin-customers-toolbar glass-panel">
         <div className="admin-customers-search-wrap">
           <Search size={16} className="admin-customers-search-icon" aria-hidden="true" />
           <input
             type="search"
             className="form-control admin-customers-search-input"
-            placeholder="Search by client name, phone, address, service, or remarks..."
+            placeholder="Search by client name, phone, address, service, amount, or status..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -409,39 +441,57 @@ export default function AdminCustomers({ adminPin }) {
           )}
         </div>
 
-        <div className="admin-customers-filter-pills">
-          <button
-            type="button"
-            className={`admin-filter-pill ${filterCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('all')}
-          >
-            All Clients ({customers.length})
-          </button>
-          <button
-            type="button"
-            className={`admin-filter-pill ${filterCategory === '5star' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('5star')}
-          >
-            ⭐ 5-Star Reviews
-          </button>
-          <button
-            type="button"
-            className={`admin-filter-pill ${filterCategory === 'hasImages' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('hasImages')}
-          >
-            📸 With Photos
-          </button>
-          <button
-            type="button"
-            className={`admin-filter-pill ${filterCategory === 'hasFeedback' ? 'active' : ''}`}
-            onClick={() => setFilterCategory('hasFeedback')}
-          >
-            💬 Has Feedback
-          </button>
+        <div className="admin-customers-toolbar-right">
+          <div className="admin-customers-filter-pills">
+            <button
+              type="button"
+              className={`admin-filter-pill ${filterCategory === 'all' ? 'active' : ''}`}
+              onClick={() => setFilterCategory('all')}
+            >
+              All ({customers.length})
+            </button>
+            <button
+              type="button"
+              className={`admin-filter-pill admin-filter-pill--done ${filterCategory === 'done' ? 'active' : ''}`}
+              onClick={() => setFilterCategory('done')}
+            >
+              ● Done ({stats.doneCount})
+            </button>
+            <button
+              type="button"
+              className={`admin-filter-pill admin-filter-pill--pending ${filterCategory === 'pending' ? 'active' : ''}`}
+              onClick={() => setFilterCategory('pending')}
+            >
+              ● Pending ({stats.pendingCount})
+            </button>
+            {stats.cancelCount > 0 && (
+              <button
+                type="button"
+                className={`admin-filter-pill admin-filter-pill--cancel ${filterCategory === 'cancel' ? 'active' : ''}`}
+                onClick={() => setFilterCategory('cancel')}
+              >
+                ● Cancel ({stats.cancelCount})
+              </button>
+            )}
+            <button
+              type="button"
+              className={`admin-filter-pill ${filterCategory === '5star' ? 'active' : ''}`}
+              onClick={() => setFilterCategory('5star')}
+            >
+              ⭐ 5-Star
+            </button>
+            <button
+              type="button"
+              className={`admin-filter-pill ${filterCategory === 'hasImages' ? 'active' : ''}`}
+              onClick={() => setFilterCategory('hasImages')}
+            >
+              📸 Photos
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Customer Cards List */}
+      {/* Customer Directory Table */}
       {filteredList.length === 0 ? (
         <div className="admin-customers-empty glass-panel">
           <Users size={36} className="text-gold" style={{ opacity: 0.6, marginBottom: '0.75rem' }} />
@@ -452,169 +502,186 @@ export default function AdminCustomers({ adminPin }) {
           </button>
         </div>
       ) : (
-        <div className="admin-customers-grid">
-          {filteredList.map((client) => {
-            const cleanPhone = String(client.phone || '').replace(/[^0-9]/g, '');
-            const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-            const waMsg = encodeURIComponent(`Hi ${client.fullName}, thank you for choosing Azora Salon & Spa! We hope you loved your ${client.service || 'service'}.`);
+        <div className="admin-cust-table-card glass-panel">
+          <div className="admin-cust-table-responsive">
+            <table className="admin-cust-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '18%' }}>Customer Name</th>
+                  <th style={{ width: '13%' }}>Phone No</th>
+                  <th style={{ width: '20%' }}>Service</th>
+                  <th style={{ width: '11%' }}>Amount</th>
+                  <th style={{ width: '12%' }}>Visit Date</th>
+                  <th style={{ width: '10%' }}>Time</th>
+                  <th style={{ width: '8%' }}>Status</th>
+                  <th style={{ width: '8%', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredList.map((client) => {
+                  const cleanPhone = String(client.phone || '').replace(/[^0-9]/g, '');
+                  const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                  const waMsg = encodeURIComponent(`Hi ${client.fullName}, thank you for choosing Azora Salon & Spa!`);
+                  const displayStatus = client.status || 'Done';
+                  const initials = client.fullName.trim().split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase() || 'C';
 
-            return (
-              <div
-                key={client.id}
-                className="admin-customer-card glass-panel admin-customer-card--clickable"
-                onClick={() => setViewingCustomer(client)}
-                title="Click to view full customer dossier"
-              >
-                {/* Card Top: Identity & Action Menu */}
-                <div className="admin-cust-top">
-                  <div className="admin-cust-identity">
-                    <div className="admin-cust-avatar">
-                      {client.fullName.trim().split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase() || 'C'}
-                    </div>
-                    <div>
-                      <h3 className="admin-cust-name">{client.fullName}</h3>
-                      <div className="admin-cust-contact-chips">
-                        {client.phone && (
-                          <span className="admin-cust-chip">
-                            <Phone size={12} /> {String(client.phone)}
-                          </span>
-                        )}
-                        {client.address && (
-                          <span className="admin-cust-chip" title={client.address}>
-                            <MapPin size={12} /> {client.address}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  const rawAmt = client.amount ? String(client.amount).replace(/^₹\s*/, '').trim() : '';
+                  const isRefNumeric = !rawAmt && /^\d+([,.]\d+)?$/.test(String(client.reference || '').trim());
+                  const amtToDisplay = rawAmt || (isRefNumeric ? String(client.reference).trim() : '');
 
-                  <div className="admin-cust-actions" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      className="admin-cust-btn admin-cust-btn--view"
+                  return (
+                    <tr
+                      key={client.id}
+                      className="admin-cust-row"
                       onClick={() => setViewingCustomer(client)}
-                      title="View Full Profile Dossier"
+                      title="Click to view full customer profile dossier"
                     >
-                      <Eye size={14} /> View
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-cust-btn admin-cust-btn--edit"
-                      onClick={() => openEditModal(client)}
-                      title="Edit Customer Details"
-                    >
-                      <Edit2 size={14} /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-cust-btn admin-cust-btn--delete"
-                      onClick={() => handleDeleteClick(client)}
-                      title="Delete Customer Profile"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Visit Badges */}
-                <div className="admin-cust-meta-row">
-                  <span className="admin-cust-badge admin-cust-badge--service">
-                    <Sparkles size={13} /> {client.service || 'General Service'}
-                  </span>
-                  {client.amount && (
-                    <span className="admin-cust-badge admin-cust-badge--amount">
-                      <IndianRupee size={12} /> {String(client.amount).replace(/^₹\s*/, '')}
-                    </span>
-                  )}
-                  {client.reference && (
-                    <span className="admin-cust-badge admin-cust-badge--ref">
-                      <Tag size={13} /> Ref: {client.reference}
-                    </span>
-                  )}
-                  {client.visitDate && (
-                    <span className="admin-cust-badge admin-cust-badge--date">
-                      <Calendar size={13} /> Visit: {client.visitDate}
-                    </span>
-                  )}
-                </div>
-
-                {/* Review & Feedback Section */}
-                <div className="admin-cust-feedback-box">
-                  <div className="admin-cust-stars-row">
-                    <div className="stars-wrap">
-                      {[...Array(Math.max(1, Math.min(5, Math.round(Number(client.rating) || 5))))].map((_, idx) => (
-                        <Star key={idx} size={14} fill="currentColor" className="text-gold" />
-                      ))}
-                    </div>
-                    <span className="rating-val">{client.rating || 5}.0 Client Rating</span>
-                  </div>
-
-                  {client.feedback ? (
-                    <p className="admin-cust-quote">"{client.feedback}"</p>
-                  ) : (
-                    <p className="admin-cust-quote-missing">No feedback recorded yet</p>
-                  )}
-                </div>
-
-                {/* Stylist Remarks & Technical Notes */}
-                {client.remarks && (
-                  <div className="admin-cust-remarks-box">
-                    <div className="admin-cust-remarks-label">
-                      <FileText size={13} /> Stylist &amp; Technical Remarks:
-                    </div>
-                    <p className="admin-cust-remarks-text">{client.remarks}</p>
-                  </div>
-                )}
-
-                {/* Makeover Photos Strip */}
-                {Array.isArray(client.images) && client.images.length > 0 && (
-                  <div className="admin-cust-photos-wrap">
-                    <div className="admin-cust-photos-label">
-                      <Camera size={13} /> Customer &amp; Makeover Photos ({client.images.length})
-                    </div>
-                    <div className="admin-cust-photos-strip">
-                      {client.images.map((imgSrc, imgIdx) => (
-                        <div
-                          key={imgIdx}
-                          className="admin-cust-photo-thumb"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLightboxImage(imgSrc);
-                          }}
-                          title="Click to enlarge"
-                        >
-                          <img src={imgSrc} alt={`Makeover ${imgIdx + 1}`} />
-                          <div className="photo-zoom-hint"><Maximize2 size={12} /></div>
+                      {/* Customer Name */}
+                      <td className="admin-cust-td-name">
+                        <div className="admin-cust-name-cell">
+                          <div className="admin-cust-table-avatar">
+                            {initials}
+                          </div>
+                          <div>
+                            <strong className="admin-cust-table-fullname">{client.fullName}</strong>
+                            {client.address && (
+                              <span className="admin-cust-table-sub" title={client.address}>
+                                <MapPin size={11} /> {client.address}
+                              </span>
+                            )}
+                            {Array.isArray(client.images) && client.images.length > 0 && (
+                              <span className="admin-cust-table-photos-tag">
+                                <Camera size={11} /> {client.images.length} photo{client.images.length === 1 ? '' : 's'}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </td>
 
-                {/* Card Footer: Fast Messaging */}
-                <div className="admin-cust-card-footer" onClick={(e) => e.stopPropagation()}>
-                  {client.phone && (
-                    <>
-                      <a
-                        href={`https://wa.me/${waPhone}?text=${waMsg}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary admin-cust-wa-btn"
-                      >
-                        <MessageCircle size={15} /> WhatsApp Client
-                      </a>
-                      <a
-                        href={`tel:${client.phone}`}
-                        className="btn btn-outline-gold admin-cust-call-btn"
-                      >
-                        <Phone size={14} /> Call
-                      </a>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                      {/* Phone No */}
+                      <td className="admin-cust-td-phone" onClick={(e) => e.stopPropagation()}>
+                        {client.phone ? (
+                          <div className="admin-cust-phone-wrap">
+                            <span className="admin-cust-phone-text">{client.phone}</span>
+                            <div className="admin-cust-quick-links">
+                              <a
+                                href={`https://wa.me/${waPhone}?text=${waMsg}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="admin-cust-mini-action admin-cust-mini-action--wa"
+                                title="Chat on WhatsApp"
+                              >
+                                <MessageCircle size={13} />
+                              </a>
+                              <a
+                                href={`tel:${client.phone}`}
+                                className="admin-cust-mini-action admin-cust-mini-action--call"
+                                title="Call customer"
+                              >
+                                <Phone size={12} />
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+
+                      {/* Service */}
+                      <td className="admin-cust-td-service">
+                        <span className="admin-cust-table-service-pill" title={client.service || 'General Service'}>
+                          <Sparkles size={12} /> {client.service || 'General Service'}
+                        </span>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="admin-cust-td-amount">
+                        {amtToDisplay ? (
+                          <strong className="admin-cust-table-amount text-gold">
+                            ₹{amtToDisplay}
+                          </strong>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+
+                      {/* Visit Date */}
+                      <td className="admin-cust-td-date">
+                        <div className="admin-cust-date-wrap">
+                          <span className="admin-cust-table-date">
+                            <Calendar size={12} /> {formatVisitDate(client.visitDate)}
+                          </span>
+                          {client.reference && !isRefNumeric && (
+                            <span className="admin-cust-table-ref" title={`Source: ${client.reference}`}>
+                              {client.reference}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Time */}
+                      <td className="admin-cust-td-time">
+                        {client.visitTime || client.time ? (
+                          <span className="admin-cust-table-time">
+                            <Clock size={12} className="text-gold" /> {formatVisitTime(client.visitTime || client.time)}
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+
+                      {/* Status (Done / Pending / Cancel) */}
+                      <td className="admin-cust-td-status" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-status-dropdown-wrap">
+                          <select
+                            className={`admin-status-badge-select admin-status--${displayStatus.toLowerCase()}`}
+                            value={displayStatus}
+                            onChange={(e) => handleQuickStatusChange(client, e.target.value)}
+                            title="Click to update status"
+                          >
+                            <option value="Done">● Done</option>
+                            <option value="Pending">● Pending</option>
+                            <option value="Cancel">● Cancel</option>
+                          </select>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="admin-cust-td-actions" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-cust-row-actions">
+                          <button
+                            type="button"
+                            className="admin-cust-btn admin-cust-btn--view"
+                            onClick={() => setViewingCustomer(client)}
+                            title="View Full Profile Dossier"
+                          >
+                            <Eye size={14} />
+                            <span>View</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-cust-btn admin-cust-btn--edit"
+                            onClick={() => openEditModal(client)}
+                            title="Edit Customer Details"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-cust-btn admin-cust-btn--delete"
+                            onClick={() => handleDeleteClick(client)}
+                            title="Delete Customer Profile"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -719,7 +786,7 @@ export default function AdminCustomers({ adminPin }) {
                 </div>
               </div>
 
-              {/* Service Amount / Bill Total */}
+              {/* Service Amount & Status */}
               <div className="admin-form-row-2">
                 <div className="form-group">
                   <label className="form-label">Service Amount / Bill Total (₹)</label>
@@ -737,23 +804,23 @@ export default function AdminCustomers({ adminPin }) {
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Row 4: Reference Source & Visit Date */}
-              <div className="admin-form-row-2">
                 <div className="form-group">
-                  <label className="form-label">How Did They Find Azora?</label>
+                  <label className="form-label">Status</label>
                   <select
                     className="form-control"
-                    value={formData.reference}
-                    onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                    value={formData.status || 'Done'}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   >
-                    {REFERENCE_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
+                    <option value="Done">● Done (Completed)</option>
+                    <option value="Pending">● Pending (In Progress / Booked)</option>
+                    <option value="Cancel">● Cancel (Cancelled)</option>
                   </select>
                 </div>
+              </div>
 
+              {/* Row 4: Visit Date & Visit Time */}
+              <div className="admin-form-row-2">
                 <div className="form-group">
                   <label className="form-label">Visit Date</label>
                   <input
@@ -763,6 +830,48 @@ export default function AdminCustomers({ adminPin }) {
                     onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
                   />
                 </div>
+
+                <div className="form-group">
+                  <label className="form-label">Visit Time / Slot</label>
+                  <input
+                    type="text"
+                    list="azora-visit-time-slots"
+                    className="form-control"
+                    placeholder="e.g. 11:30 AM or 04:00 PM"
+                    value={formData.visitTime}
+                    onChange={(e) => setFormData({ ...formData, visitTime: e.target.value })}
+                  />
+                  <datalist id="azora-visit-time-slots">
+                    <option value="10:00 AM" />
+                    <option value="10:30 AM" />
+                    <option value="11:00 AM" />
+                    <option value="11:30 AM" />
+                    <option value="12:00 PM" />
+                    <option value="12:30 PM" />
+                    <option value="01:00 PM" />
+                    <option value="02:00 PM" />
+                    <option value="03:00 PM" />
+                    <option value="04:00 PM" />
+                    <option value="05:00 PM" />
+                    <option value="06:00 PM" />
+                    <option value="07:00 PM" />
+                    <option value="08:00 PM" />
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Row 4.5: Reference Source */}
+              <div className="form-group">
+                <label className="form-label">How Did They Find Azora?</label>
+                <select
+                  className="form-control"
+                  value={formData.reference}
+                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                >
+                  {REFERENCE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Row 5: Rating & Customer Review / Feedback */}
@@ -881,135 +990,161 @@ export default function AdminCustomers({ adminPin }) {
       )}
 
       {/* Individual Customer Record Dossier View Modal */}
-      {viewingCustomer && (
-        <div className="modal-overlay" onClick={() => setViewingCustomer(null)}>
-          <div
-            className="modal-content admin-cust-dossier-modal glass-panel"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="modal-close"
-              onClick={() => setViewingCustomer(null)}
-              aria-label="Close dossier"
+      {viewingCustomer && (() => {
+        const rawDossierAmt = viewingCustomer.amount ? String(viewingCustomer.amount).replace(/^₹\s*/, '').trim() : '';
+        const isRefNumeric = !rawDossierAmt && /^\d+([,.]\d+)?$/.test(String(viewingCustomer.reference || '').trim());
+        const dossierAmount = rawDossierAmt || (isRefNumeric ? String(viewingCustomer.reference).trim() : '');
+
+        return (
+          <div className="modal-overlay" onClick={() => setViewingCustomer(null)}>
+            <div
+              className="modal-content admin-cust-dossier-modal glass-panel"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X size={20} />
-            </button>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setViewingCustomer(null)}
+                aria-label="Close dossier"
+              >
+                <X size={20} />
+              </button>
 
-            {/* Dossier Header */}
-            <div className="cust-dossier-header">
-              <div className="cust-dossier-avatar-wrap">
-                {Array.isArray(viewingCustomer.images) && viewingCustomer.images.length > 0 ? (
-                  <img
-                    src={viewingCustomer.images[0]}
-                    alt={viewingCustomer.fullName}
-                    className="cust-dossier-avatar-img"
-                    onClick={() => setLightboxImage(viewingCustomer.images[0])}
-                    title="Click to view full photo"
-                  />
-                ) : (
-                  <div className="cust-dossier-avatar-placeholder">
-                    {viewingCustomer.fullName.trim().split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase() || 'C'}
-                  </div>
-                )}
-              </div>
-
-              <div className="cust-dossier-title-wrap">
-                <div className="cust-dossier-badge-row">
-                  <span className="cust-dossier-id-badge">CLIENT #{viewingCustomer.id || 'REG'}</span>
-                  <span className="cust-dossier-verified-badge">● Registered Profile</span>
-                </div>
-                <h3 className="cust-dossier-name">{viewingCustomer.fullName}</h3>
-                <p className="cust-dossier-subtitle">
-                  Primary Treatment: <strong className="text-gold">{viewingCustomer.service || 'General Salon Care'}</strong>
-                  {viewingCustomer.amount && (
-                    <span className="cust-dossier-amount-pill">
-                      <IndianRupee size={12} /> {String(viewingCustomer.amount).replace(/^₹\s*/, '')}
-                    </span>
+              {/* Dossier Header */}
+              <div className="cust-dossier-header">
+                <div className="cust-dossier-avatar-wrap">
+                  {Array.isArray(viewingCustomer.images) && viewingCustomer.images.length > 0 ? (
+                    <img
+                      src={viewingCustomer.images[0]}
+                      alt={viewingCustomer.fullName}
+                      className="cust-dossier-avatar-img"
+                      onClick={() => setLightboxImage(viewingCustomer.images[0])}
+                      title="Click to view full photo"
+                    />
+                  ) : (
+                    <div className="cust-dossier-avatar-placeholder">
+                      {viewingCustomer.fullName.trim().split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase() || 'C'}
+                    </div>
                   )}
-                </p>
-              </div>
-            </div>
+                </div>
 
-            {/* Dossier Body */}
-            <div className="cust-dossier-body">
-              {/* Contact Information Bar */}
-              <div className="cust-dossier-contact-grid">
-                <div className="cust-dossier-info-card">
-                  <span className="info-card-label"><Phone size={13} /> Phone Number</span>
-                  <strong className="info-card-val">{viewingCustomer.phone || '—'}</strong>
-                  {viewingCustomer.phone && (
-                    <div className="info-card-actions">
-                      <a
-                        href={`https://wa.me/${String(viewingCustomer.phone || '').replace(/[^0-9]/g, '').length === 10 ? '91' + String(viewingCustomer.phone || '').replace(/[^0-9]/g, '') : String(viewingCustomer.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${viewingCustomer.fullName}, thank you for choosing Azora Salon & Spa!`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cust-mini-btn cust-mini-btn--wa"
-                      >
-                        <MessageCircle size={12} /> WhatsApp
-                      </a>
-                      <a
-                        href={`tel:${viewingCustomer.phone}`}
-                        className="cust-mini-btn cust-mini-btn--call"
-                      >
-                        <Phone size={12} /> Call
+                <div className="cust-dossier-title-wrap">
+                  <div className="cust-dossier-badge-row">
+                    <span className="cust-dossier-id-badge">CLIENT #{viewingCustomer.id || 'REG'}</span>
+                    <span className={`admin-status-badge-select admin-status--${String(viewingCustomer.status || 'Done').toLowerCase()}`}>
+                      ● {viewingCustomer.status || 'Done'}
+                    </span>
+                    <span className="cust-dossier-verified-badge">● Registered Profile</span>
+                  </div>
+                  <h3 className="cust-dossier-name">{viewingCustomer.fullName}</h3>
+                  <p className="cust-dossier-subtitle">
+                    Primary Treatment: <strong className="text-gold">{viewingCustomer.service || 'General Salon Care'}</strong>
+                    {dossierAmount && (
+                      <span className="cust-dossier-amount-pill">
+                        <IndianRupee size={12} /> {dossierAmount}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Dossier Body */}
+              <div className="cust-dossier-body">
+                {/* Contact Information Bar */}
+                <div className="cust-dossier-contact-grid">
+                  <div className="cust-dossier-info-card">
+                    <span className="info-card-label"><Phone size={13} /> Phone Number</span>
+                    <strong className="info-card-val">{viewingCustomer.phone || '—'}</strong>
+                    {viewingCustomer.phone && (
+                      <div className="info-card-actions">
+                        <a
+                          href={`https://wa.me/${String(viewingCustomer.phone || '').replace(/[^0-9]/g, '').length === 10 ? '91' + String(viewingCustomer.phone || '').replace(/[^0-9]/g, '') : String(viewingCustomer.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${viewingCustomer.fullName}, thank you for choosing Azora Salon & Spa!`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cust-mini-btn cust-mini-btn--wa"
+                        >
+                          <MessageCircle size={12} /> WhatsApp
+                        </a>
+                        <a
+                          href={`tel:${viewingCustomer.phone}`}
+                          className="cust-mini-btn cust-mini-btn--call"
+                        >
+                          <Phone size={12} /> Call
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="cust-dossier-info-card">
+                    <span className="info-card-label"><MapPin size={13} /> Address &amp; Area</span>
+                    <strong className="info-card-val">{viewingCustomer.address || 'Kamothe, Navi Mumbai'}</strong>
+                    <span className="info-card-sub">Registered client location</span>
+                  </div>
+
+                  <div className="cust-dossier-info-card">
+                    <span className="info-card-label"><Calendar size={13} /> Last Visit Date &amp; Time</span>
+                    <strong className="info-card-val">
+                      {viewingCustomer.visitDate || 'Recent'}
+                      {viewingCustomer.visitTime || viewingCustomer.time ? ` at ${formatVisitTime(viewingCustomer.visitTime || viewingCustomer.time)}` : ''}
+                    </strong>
+                    <span className="info-card-sub">Source: {viewingCustomer.reference || 'Direct Client'}</span>
+                  </div>
+
+                  {viewingCustomer.email && (
+                    <div className="cust-dossier-info-card">
+                      <span className="info-card-label"><FileText size={13} /> Email Address</span>
+                      <strong className="info-card-val">{viewingCustomer.email}</strong>
+                      <a href={`mailto:${viewingCustomer.email}`} className="info-card-sub text-gold">
+                        Send Email
                       </a>
                     </div>
                   )}
                 </div>
 
-                <div className="cust-dossier-info-card">
-                  <span className="info-card-label"><MapPin size={13} /> Address &amp; Area</span>
-                  <strong className="info-card-val">{viewingCustomer.address || 'Kamothe, Navi Mumbai'}</strong>
-                  <span className="info-card-sub">Registered client location</span>
-                </div>
+                {/* Middle Row: Client Feedback Quote & Billed Amount Card (Side-by-side) */}
+                <div className="cust-dossier-middle-grid">
+                  {/* Left Column: Rating & Client Feedback Quote */}
+                  <div className="cust-dossier-feedback-section">
+                    <div className="dossier-stars-row">
+                      <div className="stars-wrap">
+                        {[...Array(Math.max(1, Math.min(5, Math.round(Number(viewingCustomer.rating) || 5))))].map((_, idx) => (
+                          <Star key={idx} size={15} fill="currentColor" className="text-gold" />
+                        ))}
+                      </div>
+                      <strong className="dossier-rating-val">{viewingCustomer.rating || 5}.0 Client Rating</strong>
+                    </div>
 
-                <div className="cust-dossier-info-card">
-                  <span className="info-card-label"><Calendar size={13} /> Last Visit Date</span>
-                  <strong className="info-card-val">{viewingCustomer.visitDate || 'Recent'}</strong>
-                  <span className="info-card-sub">Source: {viewingCustomer.reference || 'Direct Client'}</span>
-                </div>
-
-                {viewingCustomer.email && (
-                  <div className="cust-dossier-info-card">
-                    <span className="info-card-label"><FileText size={13} /> Email Address</span>
-                    <strong className="info-card-val">{viewingCustomer.email}</strong>
-                    <a href={`mailto:${viewingCustomer.email}`} className="info-card-sub text-gold">
-                      Send Email
-                    </a>
+                    {viewingCustomer.feedback ? (
+                      <blockquote className="cust-dossier-quote">
+                        "{viewingCustomer.feedback}"
+                      </blockquote>
+                    ) : (
+                      <p className="cust-dossier-quote-missing">No client feedback note recorded for this visit.</p>
+                    )}
                   </div>
-                )}
 
-                {viewingCustomer.amount && (
-                  <div className="cust-dossier-info-card">
-                    <span className="info-card-label"><IndianRupee size={13} /> Billed Amount</span>
-                    <strong className="info-card-val text-gold">
-                      ₹{String(viewingCustomer.amount).replace(/^₹\s*/, '')}
-                    </strong>
-                    <span className="info-card-sub">Service bill recorded</span>
+                  {/* Right Column: Billed Amount Card */}
+                  <div className="cust-dossier-amount-card">
+                    <div className="dossier-amount-header">
+                      <span className="info-card-label">
+                        <IndianRupee size={14} className="text-gold" /> Total Billed Amount
+                      </span>
+                      <span className={`admin-status-badge-select admin-status--${String(viewingCustomer.status || 'Done').toLowerCase()}`}>
+                        ● {viewingCustomer.status || 'Done'}
+                      </span>
+                    </div>
+                    <div className="dossier-amount-display">
+                      {dossierAmount ? (
+                        <strong className="dossier-amount-val text-gold">₹{dossierAmount}</strong>
+                      ) : (
+                        <span className="dossier-amount-none">—</span>
+                      )}
+                    </div>
+                    <span className="dossier-amount-hint">
+                      {dossierAmount ? 'Total service bill recorded for this visit' : 'Bill total not recorded yet'}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {/* Rating & Client Feedback Quote */}
-              <div className="cust-dossier-feedback-section">
-                <div className="dossier-stars-row">
-                  <div className="stars-wrap">
-                    {[...Array(Math.max(1, Math.min(5, Math.round(Number(viewingCustomer.rating) || 5))))].map((_, idx) => (
-                      <Star key={idx} size={15} fill="currentColor" className="text-gold" />
-                    ))}
-                  </div>
-                  <strong className="dossier-rating-val">{viewingCustomer.rating || 5}.0 Client Rating</strong>
                 </div>
-
-                {viewingCustomer.feedback ? (
-                  <blockquote className="cust-dossier-quote">
-                    "{viewingCustomer.feedback}"
-                  </blockquote>
-                ) : (
-                  <p className="cust-dossier-quote-missing">No client feedback note recorded for this visit.</p>
-                )}
-              </div>
 
               {/* Stylist & Technical Remarks */}
               {viewingCustomer.remarks && (
@@ -1083,7 +1218,8 @@ export default function AdminCustomers({ adminPin }) {
             </div>
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* Luxury Styled Confirmation Dialog */}
       <ConfirmModal
@@ -1104,6 +1240,7 @@ export default function AdminCustomers({ adminPin }) {
                 customerToDelete.amount
                   ? { label: 'Billed Amount', value: `₹${String(customerToDelete.amount).replace(/^₹\s*/, '')}` }
                   : null,
+                { label: 'Status', value: customerToDelete.status || 'Done' },
                 { label: 'Contact Phone', value: customerToDelete.phone },
                 { label: 'Address / Area', value: customerToDelete.address },
               ].filter((d) => d && d.value)

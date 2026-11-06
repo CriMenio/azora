@@ -356,7 +356,9 @@ function doPost(e) {
           photosCount,
           photosString,
           timestamp.toISOString(),
-          data.amount || ""
+          data.amount || "",
+          data.status || "Done",
+          data.visitTime || data.time || ""
         ];
 
         if (existingRowIndex !== -1) {
@@ -376,8 +378,10 @@ function doPost(e) {
             address: data.address || "",
             service: data.service || "",
             amount: data.amount || "",
+            status: data.status || "Done",
             reference: data.reference || "",
             visitDate: data.visitDate || "",
+            visitTime: data.visitTime || data.time || "",
             rating: data.rating != null ? data.rating : 5,
             feedback: data.feedback || "",
             remarks: data.remarks || "",
@@ -594,6 +598,32 @@ function formatSheetDate(value) {
   return value != null ? String(value) : "";
 }
 
+function formatSheetTime(value) {
+  if (value == null || value === "") return "";
+  if (value instanceof Date) {
+    var h = value.getHours();
+    var m = value.getMinutes();
+    var ap = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    h = h ? h : 12;
+    var strH = h < 10 ? "0" + h : "" + h;
+    var strM = m < 10 ? "0" + m : "" + m;
+    return strH + ":" + strM + " " + ap;
+  }
+  var str = String(value).trim();
+  var match = str.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+  if (match) {
+    var h2 = parseInt(match[1], 10);
+    var m2 = match[2];
+    var ap2 = h2 >= 12 ? "PM" : "AM";
+    h2 = h2 % 12;
+    h2 = h2 ? h2 : 12;
+    var strH2 = h2 < 10 ? "0" + h2 : "" + h2;
+    return strH2 + ":" + m2 + " " + ap2;
+  }
+  return str;
+}
+
 function readSheetRows(sheetName, mapRow) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(sheetName);
@@ -704,7 +734,13 @@ function getAdminRecords() {
       photoUrls: rawUrls,
       images: images,
       updatedAt: formatSheetDate(row[14]),
-      amount: row[15] != null ? String(row[15]) : ""
+      amount: (function() {
+        var rAmt = row[15] != null ? String(row[15]).trim() : "";
+        var isNumRef = !rAmt && /^\d+([,.]\d+)?$/.test(String(row[7] || "").trim());
+        return rAmt || (isNumRef ? String(row[7]).trim() : "");
+      })(),
+      status: row[16] != null && String(row[16]).trim() ? String(row[16]).trim() : "Done",
+      visitTime: formatSheetTime(row[17])
     };
   });
 
@@ -729,7 +765,13 @@ function getAdminRecords() {
         photoUrls: rawUrls,
         images: images,
         updatedAt: formatSheetDate(row[14]),
-        amount: row[15] != null ? String(row[15]) : ""
+        amount: (function() {
+          var rAmt2 = row[15] != null ? String(row[15]).trim() : "";
+          var isNumRef2 = !rAmt2 && /^\d+([,.]\d+)?$/.test(String(row[7] || "").trim());
+          return rAmt2 || (isNumRef2 ? String(row[7]).trim() : "");
+        })(),
+        status: row[16] != null && String(row[16]).trim() ? String(row[16]).trim() : "Done",
+        visitTime: formatSheetTime(row[17])
       };
     });
   }
@@ -1207,7 +1249,9 @@ function getOrCreateCustomersSheet(ss) {
     "Photos Count",
     "Photo URLs",
     "Updated At",
-    "Amount (₹)"
+    "Amount (₹)",
+    "Status",
+    "Visit Time"
   ];
 
   if (!sheet) {
@@ -1226,14 +1270,30 @@ function getOrCreateCustomersSheet(ss) {
     sheet.setColumnWidth(11, 260); // Feedback
     sheet.setColumnWidth(12, 260); // Stylist Remarks
     sheet.setColumnWidth(16, 120); // Amount (₹)
+    sheet.setColumnWidth(17, 110); // Status
+    sheet.setColumnWidth(18, 110); // Visit Time
   } else {
-    // If sheet exists, ensure Amount (₹) header exists
+    // If sheet exists, ensure Amount (₹), Status and Visit Time headers exist
     var lastCol = Math.max(sheet.getLastColumn(), 1);
     var curHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
     var hasAmount = curHeaders.some(function(h) { return /amount|bill/i.test(String(h)); });
     if (!hasAmount && curHeaders.length >= 14) {
       sheet.getRange(1, curHeaders.length + 1).setValue("Amount (₹)").setFontWeight("bold");
       sheet.setColumnWidth(curHeaders.length + 1, 120);
+    }
+    lastCol = Math.max(sheet.getLastColumn(), 1);
+    curHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var hasStatus = curHeaders.some(function(h) { return /status/i.test(String(h)); });
+    if (!hasStatus && curHeaders.length >= 15) {
+      sheet.getRange(1, curHeaders.length + 1).setValue("Status").setFontWeight("bold");
+      sheet.setColumnWidth(curHeaders.length + 1, 110);
+    }
+    lastCol = Math.max(sheet.getLastColumn(), 1);
+    curHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var hasTime = curHeaders.some(function(h) { return /time/i.test(String(h)); });
+    if (!hasTime && curHeaders.length >= 16) {
+      sheet.getRange(1, curHeaders.length + 1).setValue("Visit Time").setFontWeight("bold");
+      sheet.setColumnWidth(curHeaders.length + 1, 110);
     }
   }
   return sheet;

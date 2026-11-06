@@ -361,7 +361,7 @@ export default function AdminPanel({ theme, toggleTheme, onExit }) {
       </aside>
 
       {/* Main Admin Content Body */}
-      <main className="admin-main container">
+      <main className="admin-main admin-main--fullwidth">
         <ErrorBoundary key={adminView}>
           {adminView === 'dashboard' ? (
             <AdminDashboard adminPin={getAdminPin()} onNavigate={handleAdminViewChange} />

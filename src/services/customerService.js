@@ -16,8 +16,10 @@ export const INITIAL_CUSTOMERS = [
     address: 'Flat 402, Skyline Residency, Sector 8, Kamothe',
     service: 'Bridal Makeover Suite & Hydra Glow Facial',
     amount: '4,500',
+    status: 'Done',
     reference: 'Instagram',
     visitDate: '2026-10-18',
+    visitTime: '11:30 AM',
     rating: 5,
     feedback: 'Preeti did my bridal makeup and it was absolutely stunning! She was gentle, patient, and understood my exact look. Everyone gave compliments!',
     remarks: 'Skin is sensitive to glycolic acid. Used O3+ botanical pack with excellent glow. Preferred warm copper balayage dimension.',
@@ -33,8 +35,10 @@ export const INITIAL_CUSTOMERS = [
     address: 'Plot 12, Sector 19, Kamothe, Navi Mumbai',
     service: 'Navratri Beauty Combo & Cat-Eye Gel Nails',
     amount: '1,899',
+    status: 'Done',
     reference: 'Friend / Family Referral',
     visitDate: '2026-10-20',
+    visitTime: '02:15 PM',
     rating: 5,
     feedback: 'Loved the nail art and the relaxing pedicure! The salon is very clean, hygienic, and peaceful. Will definitely come back regularly.',
     remarks: 'Cuticles are delicate. Used gentle almond soak and magnetic plum gel finish. Follow-up booked for hair spa next month.',
@@ -50,8 +54,10 @@ export const INITIAL_CUSTOMERS = [
     address: 'Gharonda Complex, Sector 9, Kamothe',
     service: 'Men’s Scissor Haircut & D-Tan Clean-Up',
     amount: '699',
+    status: 'Done',
     reference: 'Google Search / Maps',
     visitDate: '2026-10-21',
+    visitTime: '04:00 PM',
     rating: 5,
     feedback: 'Top-tier grooming! Preeti has great styling sense. Very hygienic environment and prompt service.',
     remarks: 'Prefers classic scissor contouring rather than machine fade. Regular monthly grooming client.',
@@ -60,6 +66,81 @@ export const INITIAL_CUSTOMERS = [
     updatedAt: '2026-10-21T16:00:00.000Z',
   },
 ];
+
+/**
+ * Cleanly formats a visit date string (handles ISO strings like 2026-11-05T18:30:00.000Z).
+ */
+export function formatVisitDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const cleanStr = String(dateStr).trim();
+    if (!cleanStr) return '—';
+    const isoPart = cleanStr.includes('T') ? cleanStr.split('T')[0] : cleanStr;
+    const parts = isoPart.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    }
+    const d = new Date(cleanStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    return cleanStr;
+  } catch {
+    return String(dateStr);
+  }
+}
+
+/**
+ * Cleanly formats a visit time string into standard 12-hour AM/PM format (e.g. '10:00 AM').
+ * Handles Google Sheets raw date strings like 'Sat Dec 30 1899 10:00:00 GMT+0521 (India Standard Time)',
+ * ISO timestamps, and 24-hour times.
+ */
+export function formatVisitTime(timeStr) {
+  if (!timeStr) return '';
+  try {
+    const str = String(timeStr).trim();
+    if (!str || str === '—' || str === '-') return '';
+
+    // Standard 12hr time like '10:00 AM' or '1:30 pm'
+    const twelveHrMatch = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
+    if (twelveHrMatch) {
+      const hh = twelveHrMatch[1].padStart(2, '0');
+      const mm = twelveHrMatch[2];
+      const ampm = twelveHrMatch[3].toUpperCase();
+      return `${hh}:${mm} ${ampm}`;
+    }
+
+    // 24hr time like '14:30' or '10:00'
+    const twentyFourMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (twentyFourMatch) {
+      let hours = parseInt(twentyFourMatch[1], 10);
+      const minutes = twentyFourMatch[2];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+
+    // Date string from Google Sheets (e.g. 'Sat Dec 30 1899 10:00:00 GMT+0521...') or ISO
+    const timeInDateMatch = str.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+    if (timeInDateMatch) {
+      let hours = parseInt(timeInDateMatch[1], 10);
+      const minutes = timeInDateMatch[2];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+
+    return str;
+  } catch {
+    return String(timeStr);
+  }
+}
 
 /**
  * Compresses an uploaded image file using Canvas to a reasonable size
@@ -115,14 +196,31 @@ export function getCustomers() {
     if (Array.isArray(parsed)) {
       let updated = false;
       const enriched = parsed.map((c) => {
-        if (!c.amount) {
-          const match = INITIAL_CUSTOMERS.find((init) => init.id === c.id);
+        let modified = false;
+        let obj = { ...c };
+        if (!obj.amount) {
+          const match = INITIAL_CUSTOMERS.find((init) => init.id === obj.id);
           if (match && match.amount) {
-            updated = true;
-            return { ...c, amount: match.amount };
+            obj.amount = match.amount;
+            modified = true;
+          } else if (obj.reference && /^\d+([,.]\d+)?$/.test(String(obj.reference).trim())) {
+            obj.amount = String(obj.reference).trim();
+            modified = true;
           }
         }
-        return c;
+        if (!obj.status) {
+          obj.status = 'Done';
+          modified = true;
+        }
+        if (!obj.visitTime) {
+          const match = INITIAL_CUSTOMERS.find((init) => init.id === obj.id);
+          if (match && match.visitTime) {
+            obj.visitTime = match.visitTime;
+            modified = true;
+          }
+        }
+        if (modified) updated = true;
+        return obj;
       });
       if (updated) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(enriched));
@@ -237,8 +335,12 @@ export async function syncCustomersWithSheet(adminPin) {
 
       // Sheet is master
       sheetData.forEach((c) => {
-        if (c.id) map.set(c.id, c);
-        else if (c.phone) map.set(c.phone, c);
+        const item = { ...c };
+        if (!item.amount && item.reference && /^\d+([,.]\d+)?$/.test(String(item.reference).trim())) {
+          item.amount = String(item.reference).trim();
+        }
+        if (item.id) map.set(item.id, item);
+        else if (item.phone) map.set(item.phone, item);
       });
 
       // Keep any local records not yet synced
@@ -269,6 +371,9 @@ export function filterCustomers(customers, query, filterCategory = 'all') {
 
   return customers.filter((c) => {
     // Category filter
+    if (filterCategory === 'done' && (c.status || 'Done') !== 'Done') return false;
+    if (filterCategory === 'pending' && c.status !== 'Pending') return false;
+    if (filterCategory === 'cancel' && c.status !== 'Cancel') return false;
     if (filterCategory === '5star' && c.rating !== 5) return false;
     if (filterCategory === 'hasImages' && (!Array.isArray(c.images) || c.images.length === 0)) return false;
     if (filterCategory === 'hasFeedback' && (!c.feedback || !c.feedback.trim())) return false;
@@ -281,7 +386,10 @@ export function filterCustomers(customers, query, filterCategory = 'all') {
       (c.address && c.address.toLowerCase().includes(q)) ||
       (c.service && c.service.toLowerCase().includes(q)) ||
       (c.amount && String(c.amount).toLowerCase().includes(q)) ||
+      (c.status && String(c.status).toLowerCase().includes(q)) ||
       (c.reference && c.reference.toLowerCase().includes(q)) ||
+      (c.visitDate && String(c.visitDate).toLowerCase().includes(q)) ||
+      (c.visitTime && String(c.visitTime).toLowerCase().includes(q)) ||
       (c.remarks && c.remarks.toLowerCase().includes(q)) ||
       (c.feedback && c.feedback.toLowerCase().includes(q))
     );
